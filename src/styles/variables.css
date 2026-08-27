@@ -1,0 +1,110 @@
+:root {
+  /* Color Palette - Dark Space Theme */
+  --bg-deep: #030308;
+  --bg-space: #0a0a12;
+  --bg-card: rgba(15, 15, 25, 0.85);
+  --bg-card-hover: rgba(25, 25, 40, 0.9);
+  --bg-panel: rgba(10, 10, 20, 0.92);
+
+  --fg-primary: #e8e8f0;
+  --fg-secondary: #a0a0b8;
+  --fg-muted: #686880;
+  --fg-accent: #00d4aa;
+  --fg-warn: #ffb84d;
+  --fg-danger: #ff4757;
+  --fg-info: #0088ff;
+
+  --accent-cyan: #00d4aa;
+  --accent-blue: #0088ff;
+  --accent-gold: #ffb84d;
+  --accent-red: #ff4757;
+  --accent-purple: #b870ff;
+  --accent-orange: #ff8833;
+
+  --border-subtle: rgba(100, 100, 140, 0.15);
+  --border-default: rgba(120, 120, 160, 0.3);
+  --border-strong: rgba(160, 160, 200, 0.5);
+
+  --glow-cyan: rgba(0, 212, 170, 0.4);
+  --glow-blue: rgba(0, 136, 255, 0.4);
+  --glow-gold: rgba(255, 184, 77, 0.4);
+
+  --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-medium: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --shadow-strong: 0 16px 64px rgba(0, 0, 0, 0.6);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-ui: 'Space Grotesk', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  --z-hud: 100;
+  --z-panel: 200;
+  --z-modal: 300;
+  --z-tooltip: 400;
+
+  /* Scale reference values (in meters) */
+  --scale-planetary: 1e7;      // 10,000 km
+  --scale-orbital: 1e11;       // 1 AU
+  --scale-system: 1e13;        // 100 AU
+  --scale-interstellar: 1e16;  // 1 ly
+  --scale-galactic: 1e20;      // 10 kly
+  --scale-intergalactic: 1e22; // 1 Mly
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-deep: #f0f0f8;
+    --bg-space: #e8e8f0;
+    --bg-card: rgba(245, 245, 250, 0.9);
+    --bg-card-hover: rgba(235, 235, 245, 0.95);
+    --bg-panel: rgba(250, 250, 255, 0.95);
+
+    --fg-primary: #181828;
+    --fg-secondary: #484860;
+    --fg-muted: #787890;
+
+    --border-subtle: rgba(60, 60, 100, 0.1);
+    --border-default: rgba(80, 80, 120, 0.25);
+    --border-strong: rgba(100, 100, 140, 0.4);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Selection */
+::selection {
+  background: var(--glow-cyan);
+  color: var(--bg-deep);
+}
+
+/* Focus visible */
+*:focus-visible {
+  outline: 2px solid var(--fg-accent);
+  outline-offset: 2px;
+}

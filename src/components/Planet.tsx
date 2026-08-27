@@ -1,0 +1,329 @@
+import { useRef, useMemo, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { CelestialBodyData } from '@/types/orbitalElements';
+import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
+import { useSimulationClock } from '@/hooks/useSimulationClock';
+import { Moon } from './Moon';
+import { useScale } from '@/context/ScaleContext';
+
+// Use Line from three to avoid SVG <line> conflict
+const Line = THREE.Line;
+
+interface PlanetProps {
+  /** Planet data from planets.ts */
+  data: CelestialBodyData;
+  /** Visual scale multiplier for planet size (for "visual scale" mode) */
+  visualScale?: number;
+  /** True scale mode - uses actual physical radii */
+  trueScale?: boolean;
+  /** Show orbit path */
+  showOrbit?: boolean;
+  /** Orbit line color */
+  orbitColor?: string;
+  /** Orbit line opacity */
+  orbitOpacity?: number;
+  /** Enable axial rotation */
+  rotate?: boolean;
+  /** Click handler for selection */
+  onClick?: (data: CelestialBodyData) => void;
+  /** Moons orbiting this planet */
+  moons?: CelestialBodyData[];
+  /** Visual scale for moons */
+  moonVisualScale?: number;
+}
+
+export function Planet({
+  data,
+  visualScale = 1,
+  trueScale = false,
+  showOrbit = true,
+  orbitColor,
+  orbitOpacity = 0.3,
+  rotate = true,
+  onClick,
+  moons = [],
+  moonVisualScale = 1,
+}: PlanetProps) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const ringRefs = useRef<THREE.Mesh[]>([]);
+  const { trueScale: contextTrueScale } = useScale();
+
+  // Use context trueScale if not explicitly overridden
+  const effectiveTrueScale = trueScale ?? contextTrueScale;
+
+  // Get simulation time from clock
+  const { julianDate } = useSimulationClock();
+
+  // Calculate position using Keplerian orbital mechanics
+  const position = useKeplerianOrbit(data.orbital!, julianDate);
+
+  // Generate orbit path points for visualization
+  const orbitPath = useOrbitPath(data.orbital!, 360);
+
+  // Create orbit line geometry
+  const orbitGeometry = useMemo(() => {
+    if (!orbitPath || orbitPath.length === 0 || !showOrbit) return null;
+    const geometry = new THREE.BufferGeometry();
+    const points = orbitPath.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
+    geometry.setFromPoints(points);
+    return geometry;
+  }, [orbitPath, showOrbit]);
+
+  // Planet geometry - use segments based on LOD
+  const geometry = useMemo(() => new THREE.SphereGeometry(1, 32, 32), []);
+
+  // Determine radius based on scale mode
+  const displayRadius = effectiveTrueScale
+    ? data.physical.radius
+    : data.physical.radius * visualScale;
+
+  // For rings, scale the ring radii appropriately
+  const ringScale = effectiveTrueScale ? 1 : visualScale;
+
+  // Create material with planet's base color
+  const material = useMemo(() => {
+    const baseColor = new THREE.Color(data.visual.baseColor);
+    return new THREE.MeshStandardMaterial({
+      color: baseColor,
+      roughness: 0.7,
+      metalness: 0.1,
+      // Use toneMapped: false for emissive planets if needed
+    });
+  }, [data.visual.baseColor]);
+
+  // Orbit line material
+  const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({
+    color: new THREE.Color(orbitColor || data.visual.orbitColor || '#444466'),
+    transparent: true,
+    opacity: orbitOpacity,
+    depthWrite: false,
+  }), [orbitColor, orbitOpacity, data.visual.orbitColor]);
+
+  // Handle click for selection
+  useEffect(() => {
+    if (!onClick) return;
+    const mesh = meshRef.current;
+    if (!mesh) return;
+
+    const handleClick = (event: THREE.Intersection) => {
+      if (event.object === mesh || event.object.parent === mesh) {
+        onClick(data);
+      }
+    };
+
+    // We need to attach to raycaster - this is a simplified approach
+    // In practice, you'd use @react-three/drei's useRaycaster or similar
+    return () => {};
+  }, [onClick, data]);
+
+  // Axial rotation
+  useFrame((_state, delta) => {
+    if (rotate && meshRef.current && data.physical.rotationPeriod > 0) {
+      const angularSpeed = (2 * Math.PI) / data.physical.rotationPeriod;
+      meshRef.current.rotation.y += angularSpeed * delta;
+    }
+
+    // Ring rotation (if applicable)
+    if (ringRefs.current.length > 0 && data.visual.rings?.rotationPeriod) {
+      const angularSpeed = (2 * Math.PI) / data.visual.rings.rotationPeriod;
+      ringRefs.current.forEach(ring => {
+        if (ring) ring.rotation.y += angularSpeed * delta;
+      });
+    }
+  });
+
+  // Create rings if planet has them (with gaps for Saturn)
+  const rings = useMemo(() => {
+    if (!data.visual.rings) return null;
+
+    const { innerRadius, outerRadius, color, opacity, gaps, rotationPeriod } = data.visual.rings;
+
+    // If there are gaps, create multiple ring segments
+    if (gaps && gaps.length > 0) {
+      const ringSegments: React.ReactNode[] = [];
+      let currentInner = innerRadius;
+
+      // Sort gaps by start radius
+      const sortedGaps = [...gaps].sort((a, b) => a.start - b.start);
+
+      sortedGaps.forEach((gap, index) => {
+        // Add ring segment before gap
+        if (gap.start > currentInner) {
+          const segmentGeometry = new THREE.RingGeometry(
+            currentInner * ringScale,
+            gap.start * ringScale,
+            128,
+            1
+          );
+          const segmentMaterial = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(color),
+            transparent: true,
+            opacity,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            blending: THREE.NormalBlending,
+          });
+
+          const refCallback = (mesh: THREE.Mesh | null) => {
+            if (mesh) ringRefs.current[index * 2] = mesh;
+          };
+
+          ringSegments.push(
+            <mesh
+              key={`ring-segment-${index}`}
+              ref={refCallback}
+              geometry={segmentGeometry}
+              material={segmentMaterial}
+              rotation={[-Math.PI / 2, 0, 0]}
+              renderOrder={2}
+            />
+          );
+        }
+
+        // Add gap (as a very transparent ring or skip)
+        if (gap.opacity > 0 && gap.opacity < 1) {
+          const gapGeometry = new THREE.RingGeometry(
+            gap.start * ringScale,
+            gap.end * ringScale,
+            128,
+            1
+          );
+          const gapMaterial = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(color),
+            transparent: true,
+            opacity: opacity * gap.opacity,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            blending: THREE.NormalBlending,
+          });
+
+          const refCallback = (mesh: THREE.Mesh | null) => {
+            if (mesh) ringRefs.current[index * 2 + 1] = mesh;
+          };
+
+          ringSegments.push(
+            <mesh
+              key={`ring-gap-${index}`}
+              ref={refCallback}
+              geometry={gapGeometry}
+              material={gapMaterial}
+              rotation={[-Math.PI / 2, 0, 0]}
+              renderOrder={2}
+            />
+          );
+        }
+
+        currentInner = gap.end;
+      });
+
+      // Add final segment after last gap
+      if (currentInner < outerRadius) {
+        const segmentGeometry = new THREE.RingGeometry(
+          currentInner * ringScale,
+          outerRadius * ringScale,
+          128,
+          1
+        );
+        const segmentMaterial = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(color),
+          transparent: true,
+          opacity,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.NormalBlending,
+        });
+
+        const refCallback = (mesh: THREE.Mesh | null) => {
+          if (mesh) ringRefs.current[sortedGaps.length * 2] = mesh;
+        };
+
+        ringSegments.push(
+          <mesh
+            key={`ring-segment-final`}
+            ref={refCallback}
+            geometry={segmentGeometry}
+            material={segmentMaterial}
+            rotation={[-Math.PI / 2, 0, 0]}
+            renderOrder={2}
+          />
+        );
+      }
+
+      return <group>{ringSegments}</group>;
+    }
+
+    // No gaps - single ring
+    const ringGeometry = new THREE.RingGeometry(
+      innerRadius * ringScale,
+      outerRadius * ringScale,
+      128,
+      1
+    );
+
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color),
+      transparent: true,
+      opacity,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+    });
+
+    return (
+      <mesh
+        ref={(mesh) => { if (mesh) ringRefs.current[0] = mesh; }}
+        geometry={ringGeometry}
+        material={ringMaterial}
+        rotation={[-Math.PI / 2, 0, 0]}
+        renderOrder={2}
+      />
+    );
+  }, [data.visual.rings, ringScale]);
+
+  // Create moons as children
+  const moonComponents = useMemo(() => {
+    return moons.map((moonData) => (
+      <Moon
+        key={moonData.id}
+        data={moonData}
+        parentPosition={position}
+        visualScale={moonVisualScale}
+        trueScale={effectiveTrueScale}
+        showOrbit={showOrbit}
+        rotate={rotate}
+        onClick={onClick}
+      />
+    ));
+  }, [moons, position, moonVisualScale, effectiveTrueScale, showOrbit, rotate, onClick]);
+
+  return (
+    <group position={position as any}>
+      {/* Orbit path visualization */}
+      {showOrbit && orbitGeometry && (
+        <primitive
+          object={useMemo(() => new Line(orbitGeometry, orbitMaterial), [orbitGeometry, orbitMaterial])}
+          renderOrder={-1}
+        />
+      )}
+
+      {/* Planet sphere */}
+      <mesh
+        ref={meshRef}
+        geometry={geometry}
+        material={material}
+        scale={[displayRadius, displayRadius, displayRadius]}
+        rotation={[-data.physical.axialTilt, 0, 0]}
+        castShadow
+        receiveShadow
+        onClick={(e) => { e.stopPropagation(); onClick?.(data); }}
+      />
+
+      {/* Rings (if applicable) - Saturn, Uranus, Neptune */}
+      {rings}
+
+      {/* Moons orbiting this planet */}
+      {moonComponents}
+    </group>
+  );
+}
