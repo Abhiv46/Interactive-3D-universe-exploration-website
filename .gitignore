@@ -45,3 +45,5 @@ vite.config.ts.timestamp-*.mjs
 # Misc
 *.pem
 .cache/
+.vercel
+.env*
