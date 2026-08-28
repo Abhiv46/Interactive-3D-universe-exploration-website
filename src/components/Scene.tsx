@@ -46,7 +46,6 @@ function SceneContent() {
   const { settings } = useSettings();
   const { effectiveSettings } = useLowPerformanceMode();
   const { julianDate, speed: timeScale, isRunning } = useSimulationClock();
-  const { camera, gl } = useThree();
   const { onCanvasReady } = useLoading();
 
   // Log when SceneContent renders
@@ -56,13 +55,6 @@ function SceneContent() {
   useEffect(() => {
     onCanvasReady();
   }, [onCanvasReady]);
-
-  // Touch controls
-  const { registerControls: registerTouchControls } = useTouchControls({
-    enabled: true,
-    camera,
-    renderer: gl,
-  });
 
   // Register all bodies for camera tracking
   useEffect(() => {
@@ -74,12 +66,6 @@ function SceneContent() {
   const showSolarSystem = scaleMode === 'solar-system';
   const showStarField = scaleMode === 'solar-system' || scaleMode === 'interstellar';
   const showMilkyWay = (scaleMode === 'galactic' || scaleMode === 'intergalactic') && settings.showMilkyWay;
-
-  // Combined registerControls that registers both camera controls and touch controls
-  const combinedRegisterControls = (controls: any) => {
-    registerControls(controls);
-    registerTouchControls(controls);
-  };
 
   return (
     <>
@@ -101,6 +87,17 @@ function SceneContent() {
           console.log('[Scene] RenderStateContext registered');
         }}
       >
+        <SceneInner
+          showSolarSystem={showSolarSystem}
+          showStarField={showStarField}
+          showMilkyWay={showMilkyWay}
+          starMagnitudeLimit={starMagnitudeLimit}
+          showConstellations={showConstellations}
+          effectiveSettings={effectiveSettings}
+          julianDate={julianDate}
+          timeScale={timeScale}
+          registerControls={registerControls}
+        />
         <color attach="background" args={[0x000000]} />
         <ambientLight intensity={0.1} />
         <pointLight position={[0, 0, 0]} intensity={2} color="#fff5e6" distance={0} decay={2} />
@@ -226,6 +223,180 @@ function SceneContent() {
 
       {/* Time Control UI Overlay */}
       <TimeControlUI />
+    </>
+  );
+}
+
+// Inner component that MUST be inside <Canvas> to use R3F hooks
+function SceneInner({
+  showSolarSystem,
+  showStarField,
+  showMilkyWay,
+  starMagnitudeLimit,
+  showConstellations,
+  effectiveSettings,
+  julianDate,
+  timeScale,
+  registerControls,
+}: {
+  showSolarSystem: boolean;
+  showStarField: boolean;
+  showMilkyWay: boolean;
+  starMagnitudeLimit: number;
+  showConstellations: boolean;
+  effectiveSettings: any;
+  julianDate: number;
+  timeScale: number;
+  registerControls: any;
+}) {
+  const { camera, gl } = useThree();
+  const { trueScale } = useScale();
+  const { registerCamera, registerBodies } = useCameraControls();
+  const registerAllBodies = useRegisterBodies();
+  const { registerRenderer, registerScene } = useRenderState();
+  const { settings } = useSettings();
+  const { effectiveSettings: lowPerfSettings } = useLowPerformanceMode();
+
+  // Touch controls - must be inside Canvas
+  const { registerControls: registerTouchControls } = useTouchControls({
+    enabled: true,
+    camera,
+    renderer: gl,
+  });
+
+  // Combined registerControls that registers both camera controls and touch controls
+  useEffect(() => {
+    const combined = (controls: any) => {
+      registerControls(controls);
+      registerTouchControls(controls);
+    };
+    // We can't directly assign to ref from here, but the ref is already passed
+    // The OrbitControls below uses the registerControls ref directly
+  }, [registerControls, registerTouchControls]);
+
+  return (
+    <>
+      <color attach="background" args={[0x000000]} />
+      <ambientLight intensity={0.1} />
+      <pointLight position={[0, 0, 0]} intensity={2} color="#fff5e6" distance={0} decay={2} />
+
+      {/* Background star field - rendered at 1 million units, behind solar system */}
+      {showStarField && (
+        <StarFieldWrapper
+          distance={1e6}
+          maxMagnitude={starMagnitudeLimit}
+          maxStars={effectiveSettings.starCount}
+          showConstellations={showConstellations && effectiveSettings.showConstellations}
+        />
+      )}
+
+      {/* Milky Way Galaxy - visible at galactic and intergalactic scales */}
+      {showMilkyWay && (
+        <MilkyWay
+          visible={true}
+          opacity={trueScale ? 1 : 0.5}
+          quality={effectiveSettings.qualityPreset}
+        />
+      )}
+
+      {/* Solar System - visible at solar-system scale */}
+      {showSolarSystem && (
+        <>
+          {/* Sun at center */}
+          <Sun onClick={() => {}} radius={5} />
+
+          {/* Mercury - closest to Sun */}
+          <Planet data={MERCURY} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+
+          {/* Venus */}
+          <Planet data={VENUS} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+
+          {/* Earth orbiting Sun with real Keplerian mechanics + Moon */}
+          <Planet
+            data={EARTH}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+            moons={[MOON]}
+            moonVisualScale={2000}
+          />
+
+          {/* ISS Tracker (real-time position) */}
+          <ISSTracker earthBody={EARTH} enabled={effectiveSettings.showISS} julianDate={julianDate} timeScale={timeScale} />
+
+          {/* Mars */}
+          <Planet data={MARS} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+
+          {/* Jupiter with Galilean moons */}
+          <Planet
+            data={JUPITER}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+            moons={[IO, EUROPA, GANYMEDE, CALLISTO]}
+            moonVisualScale={2000}
+          />
+
+          {/* Saturn with rings + Titan and Enceladus */}
+          <Planet
+            data={SATURN}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+            moons={[TITAN, ENCELADUS]}
+            moonVisualScale={2000}
+          />
+
+          {/* Uranus with rings */}
+          <Planet data={URANUS} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+
+          {/* Neptune with rings */}
+          <Planet data={NEPTUNE} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+
+          {/* Asteroid Belt between Mars and Jupiter */}
+          {effectiveSettings.showAsteroidBelt && <AsteroidBelt />}
+
+          {/* Kuiper Belt beyond Neptune */}
+          {effectiveSettings.showKuiperBelt && <KuiperBelt />}
+
+          {/* Eclipse visualization */}
+          <EclipseVisualizer bodies={BODIES_MAP} julianDate={julianDate} timeScale={timeScale} />
+        </>
+      )}
+
+      {/* Orbit controls for camera */}
+      <OrbitControls
+        ref={registerControls}
+        enablePan={false}
+        enableDamping={true}
+        dampingFactor={0.05}
+        minDistance={5}
+        maxDistance={500}
+        // Touch controls
+        touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
+      />
+
+      {/* Post-processing for bloom effect on Sun */}
+      <EffectComposer multisampling={4} renderPriority={1}>
+        <>
+          {effectiveSettings.enableFXAA && <FXAA />}
+          {effectiveSettings.enableBloom && (
+            <Bloom
+              intensity={effectiveSettings.bloomIntensity}
+              luminanceThreshold={effectiveSettings.bloomThreshold}
+              luminanceSmoothing={effectiveSettings.bloomSmoothing}
+              mipmapBlur={true}
+            />
+          )}
+          {effectiveSettings.enableVignette && (
+            <Vignette
+              offset={0.5}
+              darkness={0.3}
+              eskil={false}
+            />
+          )}
+        </>
+      </EffectComposer>
     </>
   );
 }
