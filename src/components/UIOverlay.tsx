@@ -19,12 +19,12 @@ import { useI18n } from '@/i18n/index';
 import { useState } from 'react';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
-import { CameraControlsProvider, useCameraControls } from '@/hooks/useCameraControls';
+import { useCameraControls } from '@/hooks/useCameraControls';
 import { SurfaceZoomProvider, useSurfaceZoomContext } from '@/context/SurfaceZoomContext';
 import { EclipseIndicator } from './SolarSystem/EclipseVisualizer';
 import { ISSTracker, ISSInfoPanel, useISSTracker } from './SolarSystem/ISSTracker';
 import { AuroraIndicator } from './SolarSystem/AuroraIndicator';
-import { useSimulationClock } from '@/hooks/useSimulationClock';
+import { useJulianDate, useSimulationControls } from '@/hooks/useSimulationClock';
 import { BODIES_MAP } from '@/data/bodiesMap';
 
 function UIOverlayContent() {
@@ -33,7 +33,7 @@ function UIOverlayContent() {
   const { showToast } = useToast();
   const { setFocus, getBodyPosition } = useCameraControls();
   const { surfaceRegion } = useSurfaceZoomContext();
-  const { julianDate } = useSimulationClock();
+  const julianDate = useJulianDate();
   const { enabled, issPosition } = useISSTracker();
   const { t } = useI18n();
 
@@ -148,15 +148,13 @@ function UIOverlayContent() {
 export function UIOverlay() {
   return (
     <ToastProvider>
-      <CameraControlsProvider>
-        <SurfaceZoomProvider>
-          <TourProvider>
-            <AchievementsProvider>
-              <UIOverlayContent />
-            </AchievementsProvider>
-          </TourProvider>
-        </SurfaceZoomProvider>
-      </CameraControlsProvider>
+      <SurfaceZoomProvider>
+        <TourProvider>
+          <AchievementsProvider>
+            <UIOverlayContent />
+          </AchievementsProvider>
+        </TourProvider>
+      </SurfaceZoomProvider>
     </ToastProvider>
   );
 }

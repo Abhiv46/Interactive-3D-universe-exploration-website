@@ -17,6 +17,18 @@ function getGlobalClock() {
   return globalClock;
 }
 
+// Base hook that only subscribes to the clock - use specific hooks for specific values
+function useClockState<T>(selector: (state: SimulationClockState) => T): T {
+  const clock = getGlobalClock();
+
+  const subscribe = useCallback((callback: () => void) => clock.subscribe(callback), [clock]);
+  const getSnapshot = useCallback(() => selector(clock.getState()), [clock]);
+  const getServerSnapshot = useCallback(() => selector(clock.getState()), [clock]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+// Full clock state + controls - use sparingly as it re-renders on every tick
 export function useSimulationClock(): SimulationClockState & SimulationClockControls {
   const clock = getGlobalClock();
 
@@ -46,24 +58,44 @@ export function useSimulationClock(): SimulationClockState & SimulationClockCont
   return { ...state, ...controls };
 }
 
+// Specific selectors that only re-render when their specific value changes
+// Return primitives to ensure stable references
 export function useJulianDate(): number {
-  const { julianDate } = useSimulationClock();
-  return julianDate;
+  return useClockState(state => state.julianDate);
 }
 
 export function useTimeSpeed(): TimeSpeed {
-  const { speed } = useSimulationClock();
-  return speed;
+  return useClockState(state => state.speed);
 }
 
-export function useSimulationTime(): Date {
-  const { date } = useSimulationClock();
-  return date;
+export function useSimulationTime(): number {
+  // Return timestamp (number) instead of Date object for stable reference
+  return useClockState(state => state.date.getTime());
 }
 
 export function useSimulationPlaying(): boolean {
-  const { isRunning } = useSimulationClock();
-  return isRunning;
+  return useClockState(state => state.isRunning);
+}
+
+// Controls that don't cause re-renders
+export function useSimulationControls(): SimulationClockControls {
+  const clock = getGlobalClock();
+  return {
+    play: useCallback(() => clock.play(), [clock]),
+    pause: useCallback(() => clock.pause(), [clock]),
+    toggle: useCallback(() => clock.toggle(), [clock]),
+    setSpeed: useCallback((speed: TimeSpeed) => clock.setSpeed(speed), [clock]),
+    speedUp: useCallback(() => clock.speedUp(), [clock]),
+    speedDown: useCallback(() => clock.speedDown(), [clock]),
+    setDate: useCallback((date: Date | number) => clock.setDate(date), [clock]),
+    setJulianDate: useCallback((jd: number) => clock.setJulianDate(jd), [clock]),
+    jumpForward: useCallback((days: number) => clock.jumpForward(days), [clock]),
+    jumpBackward: useCallback((days: number) => clock.jumpBackward(days), [clock]),
+    resetToNow: useCallback(() => clock.resetToNow(), [clock]),
+    resetToEpoch: useCallback(() => clock.resetToEpoch(), [clock]),
+    getState: useCallback(() => clock.getState(), [clock]),
+    subscribe: useCallback((callback: (state: SimulationClockState) => void) => clock.subscribe(callback), [clock]),
+  };
 }
 
 // Re-export TIME_SPEEDS from the engine

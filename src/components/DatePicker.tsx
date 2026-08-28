@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSimulationClock } from '@/hooks/useSimulationClock';
+import { useJulianDate, useSimulationControls, useTimeSpeed, useSimulationPlaying, useSimulationTime } from '@/hooks/useSimulationClock';
 import { J2000_EPOCH, SECONDS_PER_DAY } from '@/engine/Constants';
 
 interface DatePickerProps {
@@ -8,7 +8,10 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ onDateChange }: DatePickerProps) {
-  const { julianDate, setJulianDate, speed, isRunning, toggle } = useSimulationClock();
+  const julianDate = useJulianDate();
+  const { setJulianDate, toggle } = useSimulationControls();
+  const speed = useTimeSpeed();
+  const isRunning = useSimulationPlaying();
   const [inputDate, setInputDate] = useState<Date>(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());

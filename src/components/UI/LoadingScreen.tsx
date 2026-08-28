@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -304,8 +304,8 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     setCanvasReady(true);
   }, []);
 
-  // Provide loading context to children
-  const loadingContext = {
+  // Provide loading context to children - use useMemo to prevent infinite re-renders
+  const loadingContext = useMemo(() => ({
     isLoading,
     progress,
     loadedAssets,
@@ -317,7 +317,19 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     onShaderLoad: shaderLoadHandler,
     registerExpectedAssets,
     onCanvasReady: canvasReadyHandler,
-  };
+  }), [
+    isLoading,
+    progress,
+    loadedAssets,
+    expectedAssets,
+    setProgress,
+    setIsLoading,
+    textureLoadHandler,
+    starDataLoadHandler,
+    shaderLoadHandler,
+    registerExpectedAssets,
+    canvasReadyHandler,
+  ]);
 
   return (
     <LoadingContext.Provider value={loadingContext}>

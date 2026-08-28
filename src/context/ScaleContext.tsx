@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
 interface ScaleContextType {
   /** true = real physical scale, false = visual scale (enlarged) */
@@ -12,10 +12,12 @@ const ScaleContext = createContext<ScaleContextType | undefined>(undefined);
 export function ScaleProvider({ children }: { children: ReactNode }) {
   const [trueScale, setTrueScale] = useState(false); // default to visual scale
 
-  const toggleScale = () => setTrueScale(prev => !prev);
+  const toggleScale = useCallback(() => setTrueScale(prev => !prev), []);
+
+  const value = useMemo(() => ({ trueScale, setTrueScale, toggleScale }), [trueScale, setTrueScale, toggleScale]);
 
   return (
-    <ScaleContext.Provider value={{ trueScale, setTrueScale, toggleScale }}>
+    <ScaleContext.Provider value={value}>
       {children}
     </ScaleContext.Provider>
   );

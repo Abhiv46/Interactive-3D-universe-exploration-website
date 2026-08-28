@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 import { SettingsState } from '@/context/SettingsContext';
 
@@ -52,7 +52,8 @@ export function useLowPerformanceMode() {
   }, [settings.lowPerformanceMode, applyLowPerformanceMode]);
 
   // Return current effective settings (considering low perf mode)
-  const getEffectiveSettings = useCallback(() => {
+  // Use useMemo to avoid creating a new object on every render
+  const effectiveSettings = useMemo(() => {
     if (!settings.lowPerformanceMode) return settings;
 
     return {
@@ -67,11 +68,25 @@ export function useLowPerformanceMode() {
       showAurora: false,
       qualityPreset: 'low' as const,
     };
-  }, [settings]);
+  }, [
+    settings.lowPerformanceMode,
+    settings.reducedStarCount,
+    settings.disablePostProcessing,
+    settings.simplifiedBelts,
+    settings.starCount,
+    settings.enableBloom,
+    settings.enableFXAA,
+    settings.enableGodRays,
+    settings.enableVignette,
+    settings.showAsteroidBelt,
+    settings.showKuiperBelt,
+    settings.showAurora,
+    settings.qualityPreset,
+  ]);
 
   return {
     isLowPerformanceMode: settings.lowPerformanceMode,
-    effectiveSettings: getEffectiveSettings(),
+    effectiveSettings,
     toggleLowPerformanceMode: () => setSettings({ lowPerformanceMode: !settings.lowPerformanceMode }),
   };
 }

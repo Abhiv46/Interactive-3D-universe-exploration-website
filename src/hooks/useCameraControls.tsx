@@ -1,7 +1,7 @@
-import { createContext, useContext, useRef, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useRef, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 import { CelestialBodyData, OrbitalElements } from '@/types/orbitalElements';
-import { useSimulationClock } from './useSimulationClock';
+import { useJulianDate, useSimulationClock } from './useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
 import { fastPosition, precomputeOrbit, PrecomputedOrbit } from '@/engine/KeplerianOrbit';
 
@@ -72,10 +72,16 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
   const [cameraPosition] = useState(() => new THREE.Vector3());
   const [cameraTarget] = useState(() => new THREE.Vector3());
 
-  const { julianDate } = useSimulationClock();
+  const julianDate = useJulianDate();
   const { trueScale } = useScale();
 
   const allBodiesRef = useRef<Map<string, CelestialBodyData>>(new Map());
+
+  // Store latest julianDate and trueScale in refs to avoid re-creating callbacks
+  const julianDateRef = useRef(julianDate);
+  const trueScaleRef = useRef(trueScale);
+  julianDateRef.current = julianDate;
+  trueScaleRef.current = trueScale;
 
   const registerBodies = useCallback((bodies: CelestialBodyData[]) => {
     const map = new Map<string, CelestialBodyData>();
@@ -93,8 +99,8 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
   };
 
   const getBodyPosition = useCallback((body: CelestialBodyData): THREE.Vector3 => {
-    return calculateBodyWorldPosition(body, julianDate, trueScale, allBodiesRef.current);
-  }, [julianDate, trueScale]);
+    return calculateBodyWorldPosition(body, julianDateRef.current, trueScaleRef.current, allBodiesRef.current);
+  }, []);
 
   const flyTo = useCallback((body: CelestialBodyData, duration = 2000) => {
     const camera = cameraRef.current;
@@ -105,7 +111,7 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
 
     let targetOffset = new THREE.Vector3(0, 0, 0);
     if (body.orbital) {
-      const scale = trueScale ? 1 : 2000;
+      const scale = trueScaleRef.current ? 1 : 2000;
       const radius = body.physical.radius * scale;
       const distance = Math.max(radius * 50, 50);
       targetOffset.set(distance, distance * 0.5, distance);
@@ -134,7 +140,7 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
     };
 
     requestAnimationFrame(animate);
-  }, [getBodyPosition, trueScale]);
+  }, [getBodyPosition]);
 
   const setFocus = useCallback((body: CelestialBodyData | null) => {
     setFocusedBodyState(body);
@@ -158,7 +164,7 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
     if (!focusedBody || !controlsRef.current) return;
     const pos = getBodyPosition(focusedBody);
     controlsRef.current.target.copy(pos);
-  }, [focusedBody, julianDate, getBodyPosition]);
+  }, [focusedBody, getBodyPosition]);
 
   const registerCamera = (camera: THREE.Camera) => {
     cameraRef.current = camera;
@@ -170,7 +176,7 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
 
   const getControls = useCallback(() => controlsRef.current, []);
 
-  const value: CameraControlsContextValue = {
+  const value = useMemo((): CameraControlsContextValue => ({
     cameraPosition,
     cameraTarget,
     focusedBody,
@@ -181,7 +187,18 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
     getControls,
     registerBodies,
     getBodyPosition,
-  };
+  }), [
+    cameraPosition,
+    cameraTarget,
+    focusedBody,
+    flyTo,
+    setFocus,
+    registerCamera,
+    registerControls,
+    getControls,
+    registerBodies,
+    getBodyPosition,
+  ]);
 
   return (
     <CameraControlsContext.Provider value={value}>

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useSimulationClock } from '@/hooks/useSimulationClock';
+import { useJulianDate, useTimeSpeed, useSimulationPlaying, useSimulationControls } from '@/hooks/useSimulationClock';
 import { useSettings, SettingsState } from '@/context/SettingsContext';
 import { useCameraControls } from '@/hooks/useCameraControls';
 import { useShareView, useApplySharedView, parseShareUrlFromLocation, ShareViewState } from '@/hooks/useShareView';
@@ -12,7 +12,9 @@ import { useRenderState } from '@/context/RenderStateContext';
 
 export function ShareButton() {
   const { camera } = useRenderState();
-  const { julianDate, speed: timeScale, isRunning } = useSimulationClock();
+  const julianDate = useJulianDate();
+  const timeScale = useTimeSpeed();
+  const isRunning = useSimulationPlaying();
   const { settings } = useSettings();
   const { getControls } = useCameraControls();
   const [selectedBody, setSelectedBody] = useState<CelestialBodyData | null>(null);

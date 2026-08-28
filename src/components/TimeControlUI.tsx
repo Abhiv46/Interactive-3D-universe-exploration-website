@@ -1,5 +1,5 @@
 import { useState, useContext, createContext, useCallback } from 'react';
-import { useSimulationClock, TIME_SPEEDS } from '../hooks/useSimulationClock';
+import { useJulianDate, useSimulationTime, useTimeSpeed, useSimulationPlaying, useSimulationControls, TIME_SPEEDS } from '../hooks/useSimulationClock';
 import { useScale } from '../context/ScaleContext';
 
 // Context for star field controls
@@ -47,24 +47,19 @@ export function StarFieldControlsProvider({ children }: StarFieldControlsProvide
 }
 
 export function TimeControlUI() {
-  const {
-    julianDate,
-    date,
-    speed,
-    isRunning,
-    play,
-    pause,
-    setSpeed,
-    resetToNow,
-    resetToEpoch,
-  } = useSimulationClock();
+  const julianDate = useJulianDate();
+  const date = useSimulationTime();
+  const speed = useTimeSpeed();
+  const isRunning = useSimulationPlaying();
+  const { play, pause, setSpeed, resetToNow, resetToEpoch } = useSimulationControls();
 
   const { trueScale, toggleScale } = useScale();
   const { showConstellations, toggleConstellations, starMagnitudeLimit, setStarMagnitudeLimit } = useStarFieldControls();
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const formatDate = (date: Date): string => {
+  const formatDate = (timestamp: number): string => {
+    const date = new Date(timestamp);
     return date.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
   };
 

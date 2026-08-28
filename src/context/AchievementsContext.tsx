@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useI18n } from '../i18n/index';
 
 export interface Achievement {
@@ -117,12 +117,12 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
     }
   }, [achievements]);
 
-  // Localize achievement names and descriptions
-  const localizedAchievements = achievements.map(ach => ({
+  // Localize achievement names and descriptions - use useMemo to avoid creating new array every render
+  const localizedAchievements = useMemo(() => achievements.map(ach => ({
     ...ach,
     name: t(`achievements.list.${ach.id}.name`),
     description: t(`achievements.list.${ach.id}.description`),
-  }));
+  })), [achievements, t]);
 
   const unlockAchievement = useCallback((id: string): boolean => {
     setAchievements(prev => {

@@ -3,6 +3,10 @@ import { UIOverlay } from './components/UIOverlay'
 import { LoadingProvider } from './components/UI/LoadingScreen'
 import { initUserProperties } from './lib/analytics'
 import { I18nProvider } from './i18n'
+import { ScaleProvider } from '@/context/ScaleContext'
+import { CameraControlsProvider } from '@/hooks/useCameraControls'
+import { SettingsProvider } from '@/context/SettingsContext'
+import { StarFieldControlsProvider } from './components/TimeControlUI'
 import { useEffect } from 'react'
 
 function App() {
@@ -19,10 +23,18 @@ function App() {
   return (
     <I18nProvider defaultLanguage="en">
       <LoadingProvider>
-        <RenderStateProvider>
-          <Scene />
-          <UIOverlay />
-        </RenderStateProvider>
+        <ScaleProvider>
+          <CameraControlsProvider>
+            <SettingsProvider>
+              <StarFieldControlsProvider>
+                <RenderStateProvider>
+                  <Scene />
+                  <UIOverlay />
+                </RenderStateProvider>
+              </StarFieldControlsProvider>
+            </SettingsProvider>
+          </CameraControlsProvider>
+        </ScaleProvider>
       </LoadingProvider>
     </I18nProvider>
   )

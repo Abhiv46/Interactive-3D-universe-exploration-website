@@ -1,11 +1,13 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode, useMemo } from 'react';
 import { useCameraControls } from '../../hooks/useCameraControls';
-import { useSimulationClock } from '../../hooks/useSimulationClock';
+import { useJulianDate, useSimulationControls } from '../../hooks/useSimulationClock';
 import { useI18n } from '../../i18n/index';
 import { useScale } from '../../context/ScaleContext';
 import * as THREE from 'three';
 import { BODIES_MAP } from '../../data/bodiesMap';
 import { CelestialBodyData } from '../../types/orbitalElements';
+
+// Memoize DEFAULT_STOPS outside the component to avoid recreation
 
 interface TourStop {
   id: string;
@@ -150,7 +152,8 @@ interface TourProviderProps {
 
 export function TourProvider({ children }: TourProviderProps) {
   const { flyTo, getControls } = useCameraControls();
-  const { julianDate } = useSimulationClock();
+  const julianDate = useJulianDate();
+  const { setSpeed } = useSimulationControls();
   const { trueScale, setTrueScale } = useScale();
   const { t } = useI18n();
 
@@ -161,7 +164,8 @@ export function TourProvider({ children }: TourProviderProps) {
   const pauseTimeoutRef = useRef<number | null>(null);
   const isPausedRef = useRef(false);
 
-  const getLocalizedStops = useCallback((): TourStop[] => {
+  // Memoize localized stops - only recompute when stops or t function changes
+  const localizedStops = useMemo((): TourStop[] => {
     return stops.map(stop => ({
       ...stop,
       name: t(`tour.stops.${stop.id}.name`),
@@ -227,7 +231,6 @@ export function TourProvider({ children }: TourProviderProps) {
 
     if (!isPlaying) return;
 
-    const localizedStops = getLocalizedStops();
     const stop = localizedStops[index];
     setCurrentStopIndex(index);
 
@@ -243,7 +246,7 @@ export function TourProvider({ children }: TourProviderProps) {
       isPausedRef.current = false;
       playStop(index + 1);
     }, stop.pauseDuration || 3000);
-  }, [isPlaying, stops, getLocalizedStops, flyToStop]);
+  }, [isPlaying, stops, localizedStops, flyToStop]);
 
   const startTour = useCallback(() => {
     setCurrentStopIndex(0);
@@ -304,7 +307,7 @@ export function TourProvider({ children }: TourProviderProps) {
   const value: TourContextValue = {
     isPlaying,
     currentStopIndex,
-    stops: getLocalizedStops(),
+    stops: localizedStops,
     startTour,
     pauseTour,
     resumeTour,
