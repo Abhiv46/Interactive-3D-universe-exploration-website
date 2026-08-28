@@ -2056,3 +2056,44 @@ button {
 .quality-indicator.medium { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
 .quality-indicator.high { background: rgba(76, 175, 80, 0.2); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.3); }
 .quality-indicator.ultra { background: rgba(156, 39, 176, 0.2); color: #9c27b0; border: 1px solid rgba(156, 39, 176, 0.3); }
+
+/* ============================================
+   APOD Panel Styles
+   ============================================ */
+.apod-panel-wrapper {
+  position: fixed;
+  top: 100px;
+  right: 24px;
+  z-index: 100;
+  max-width: 420px;
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile adjustments for APOD */
+@media (max-width: 600px) {
+  .apod-panel-wrapper {
+    top: auto;
+    bottom: 100px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .apod-panel-wrapper {
+    animation: none;
+  }
+}

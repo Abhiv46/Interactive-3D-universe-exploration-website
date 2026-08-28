@@ -1,0 +1,254 @@
+{
+  "app": {
+    "title": "Universe Explorer",
+    "subtitle": "Explore the cosmos in 3D"
+  },
+  "common": {
+    "close": "Close",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "done": "Done",
+    "sending": "Sending...",
+    "optional": "Optional"
+  },
+  "navigation": {
+    "search": "Search",
+    "settings": "Settings",
+    "feedback": "Feedback",
+    "screenshot": "Screenshot",
+    "share": "Share",
+    "tour": "Take a Tour",
+    "achievements": "Achievements",
+    "language": "Language",
+    "apod": "Picture of the Day"
+  },
+  "search": {
+    "placeholder": "Search planets, moons, stars...",
+    "noResults": "No results found",
+    "searching": "Searching..."
+  },
+  "settings": {
+    "title": "Settings",
+    "performance": "Performance",
+    "lowPerformanceMode": "Low Performance Mode",
+    "lowPerformanceDesc": "Reduce visual effects for better performance",
+    "visuals": "Visuals",
+    "showOrbits": "Show Orbits",
+    "showLabels": "Show Labels",
+    "showStars": "Show Stars",
+    "atmosphere": "Atmosphere Effects",
+    "eclipse": "Eclipse Simulation",
+    "terminator": "Day/Night Terminator",
+    "aurora": "Aurora Effect",
+    "iss": "ISS Tracking",
+    "time": "Time Controls",
+    "timeSpeed": "Time Speed",
+    "currentDate": "Current Date",
+    "resetTime": "Reset to Now"
+  },
+  "feedback": {
+    "sendFeedback": "Send Feedback",
+    "reportBug": "Report a Bug",
+    "feedbackDescription": "Help us improve by sharing your thoughts",
+    "bugDescription": "Report an issue you encountered",
+    "typeLabel": "Type",
+    "feedback": "Feedback",
+    "bug": "Bug Report",
+    "ratingLabel": "How would you rate your experience?",
+    "ratingHint": "Tap a star to rate",
+    "star": "star",
+    "messageLabel": "What could be better?",
+    "messageRequired": "Please enter a message",
+    "feedbackPlaceholder": "Tell us what you liked or what could be improved...",
+    "bugPlaceholder": "Describe the bug, steps to reproduce, expected vs actual behavior...",
+    "bugHint": "Include steps to reproduce if possible",
+    "feedbackHint": "Your suggestions help us improve",
+    "emailLabel": "Email (optional)",
+    "emailPlaceholder": "your@email.com",
+    "submitFeedback": "Submit Feedback",
+    "submitBug": "Submit Bug Report",
+    "submitted": "Thank you for your feedback!",
+    "thankYou": "Thanks for helping make this better!",
+    "submitError": "Failed to submit. Please try again."
+  },
+  "toast": {
+    "regionLabel": "Notifications"
+  },
+  "apod": {
+    "title": "NASA Astronomy Picture of the Day",
+    "loading": "Loading today's image...",
+    "error": "Failed to load APOD",
+    "retry": "Try Again",
+    "copyright": "Copyright",
+    "explanation": "Explanation",
+    "date": "Date",
+    "hd": "View HD",
+    "video": "Video"
+  },
+  "tour": {
+    "title": "Guided Tour",
+    "start": "Start Tour",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop Tour",
+    "next": "Next Stop",
+    "previous": "Previous",
+    "stopTitle": "Stop {{current}} of {{total}}",
+    "complete": "Tour Complete!",
+    "description": "Fly through the solar system and beyond",
+    "stops": {
+      "sun": {
+        "name": "The Sun",
+        "narration": "Our star, the Sun, contains 99.8% of the solar system's mass. Its gravity holds everything in orbit."
+      },
+      "mercury": {
+        "name": "Mercury",
+        "narration": "Closest to the Sun, Mercury has extreme temperatures from -180°C to 430°C. A year here is just 88 Earth days."
+      },
+      "venus": {
+        "name": "Venus",
+        "narration": "Earth's 'twin' in size, but with a crushing CO2 atmosphere and surface temperatures hot enough to melt lead."
+      },
+      "earth": {
+        "name": "Earth",
+        "narration": "Our home, the only known world with liquid water on its surface and life. The Moon stabilizes our climate."
+      },
+      "mars": {
+        "name": "Mars",
+        "narration": "The Red Planet, once wet and warm. Now a cold desert with the largest volcano and canyon in the solar system."
+      },
+      "asteroidBelt": {
+        "name": "Asteroid Belt",
+        "narration": "Between Mars and Jupiter, millions of rocky remnants from the solar system's formation orbit the Sun."
+      },
+      "jupiter": {
+        "name": "Jupiter",
+        "narration": "The king of planets. Its Great Red Spot is a storm larger than Earth, raging for at least 350 years."
+      },
+      "saturn": {
+        "name": "Saturn",
+        "narration": "Famous for its spectacular rings made of ice and rock. Saturn could float in water—it's less dense than water!"
+      },
+      "uranus": {
+        "name": "Uranus",
+        "narration": "An ice giant tilted on its side, rolling through the solar system. Its blue-green color comes from methane."
+      },
+      "neptune": {
+        "name": "Neptune",
+        "narration": "The windiest world, with supersonic winds over 2,000 km/h. Its deep blue hides a hot, dense core."
+      },
+      "edgeOfSolarSystem": {
+        "name": "Edge of the Solar System",
+        "narration": "Beyond Neptune lies the Kuiper Belt and the heliopause—where the Sun's influence ends and interstellar space begins."
+      },
+      "milkyWay": {
+        "name": "The Milky Way",
+        "narration": "Our home galaxy, a barred spiral of 100–400 billion stars. We're in the Orion Arm, 27,000 light-years from the center."
+      }
+    }
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "progress": "Progress",
+    "list": {
+      "visitedAllPlanets": {
+        "name": "Solar System Explorer",
+        "description": "Visited all 8 planets",
+        "icon": "🪐"
+      },
+      "foundAndromeda": {
+        "name": "Galaxy Hunter",
+        "description": "Found the Andromeda Galaxy",
+        "icon": "🌌"
+      },
+      "timeTraveler100": {
+        "name": "Time Traveler",
+        "description": "Traveled through time 100 years",
+        "icon": "⏳"
+      },
+      "screenshotTaken": {
+        "name": "Photographer",
+        "description": "Took your first screenshot",
+        "icon": "📸"
+      },
+      "sharedView": {
+        "name": "Sharer",
+        "description": "Shared a view with a friend",
+        "icon": "🔗"
+      },
+      "completedTour": {
+        "name": "Tourist",
+        "description": "Completed the guided tour",
+        "icon": "🗺️"
+      },
+      "visitedISS": {
+        "name": "Space Station Visitor",
+        "description": "Tracked the ISS in real-time",
+        "icon": "🛰️"
+      },
+      "witnessedEclipse": {
+        "name": "Eclipse Chaser",
+        "description": "Witnessed a solar eclipse",
+        "icon": "🌑"
+      },
+      "sawAurora": {
+        "name": "Aurora Watcher",
+        "description": "Saw the aurora at Earth's poles",
+        "icon": "💚"
+      },
+      "deepSpaceZoom": {
+        "name": "Deep Space Explorer",
+        "description": "Zoomed to the Milky Way view",
+        "icon": "✨"
+      }
+    }
+  },
+  "share": {
+    "title": "Share This View",
+    "copyLink": "Copy Link",
+    "copyImage": "Copy Image",
+    "downloadImage": "Download Image",
+    "linkCopied": "Link copied to clipboard!",
+    "imageCopied": "Image copied to clipboard!",
+    "generating": "Generating...",
+    "ogTitle": "Explore the Universe in 3D",
+    "ogDescription": "I'm exploring {{body}} in this interactive 3D universe simulator. Come take a look!",
+    "ogUrl": "https://universe-explorer.vercel.app"
+  },
+  "hud": {
+    "selected": "Selected",
+    "distance": "Distance",
+    "radius": "Radius",
+    "mass": "Mass",
+    "temperature": "Temperature",
+    "orbitalPeriod": "Orbital Period",
+    "rotationPeriod": "Rotation Period",
+    "moons": "Moons",
+    "noSelection": "Click a planet or moon to see details",
+    "surfaceZoom": "Surface Zoom",
+    "enterSurface": "Enter Surface View",
+    "exitSurface": "Exit Surface View"
+  },
+  "timeControl": {
+    "now": "Now",
+    "pause": "Pause",
+    "play": "Play",
+    "speed": "Speed",
+    "date": "Date"
+  },
+  "scaleIndicator": {
+    "au": "AU",
+    "ly": "ly",
+    "pc": "pc",
+    "km": "km",
+    "m": "m"
+  }
+}

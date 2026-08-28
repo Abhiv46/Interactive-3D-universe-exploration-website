@@ -1,0 +1,9 @@
+# Robots.txt for Universe Explorer
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://universe-explorer.vercel.app/sitemap.xml
+
+# Host
+Host: https://universe-explorer.vercel.app

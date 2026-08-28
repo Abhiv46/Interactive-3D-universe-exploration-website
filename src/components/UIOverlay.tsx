@@ -5,7 +5,17 @@ import { TimeControlUI } from './TimeControlUI';
 import { SettingsPanel } from '@/components/UI/SettingsPanel';
 import { ScreenshotButton, useScreenshotShortcut } from '@/components/UI/ScreenshotButton';
 import { ShareButton, useShareShortcut } from '@/components/UI/ShareButton';
+import { FloatingFeedbackButton } from '@/components/UI/FloatingFeedbackButton';
+import { FeedbackModal } from '@/components/UI/FeedbackModal';
+import { LanguageToggle } from '@/components/UI/LanguageToggle';
+import { APODPanel } from '@/components/UI/APODPanel';
+import { TourControls } from '@/components/UI/TourControls';
+import { TourProvider } from '@/components/UI/Tour';
+import { AchievementsPanel } from '@/components/UI/AchievementsPanel';
+import { AchievementsProvider } from '@/context/AchievementsContext';
+import { ToastProvider, useToast } from '@/components/UI/Toast';
 import { useFocusTrap } from '@/hooks/useAccessibility';
+import { useI18n } from '@/i18n/index';
 import { useState } from 'react';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
@@ -19,10 +29,13 @@ import { BODIES_MAP } from '@/data/bodiesMap';
 
 function UIOverlayContent() {
   const [selectedBody, setSelectedBody] = useState<CelestialBodyData | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { showToast } = useToast();
   const { setFocus, getBodyPosition } = useCameraControls();
   const { surfaceRegion } = useSurfaceZoomContext();
   const { julianDate } = useSimulationClock();
   const { enabled, issPosition } = useISSTracker();
+  const { t } = useI18n();
 
   // Focus trap for InfoCard
   const infoCardRef = useFocusTrap(!!selectedBody);
@@ -42,6 +55,16 @@ function UIOverlayContent() {
     console.log('Date changed to:', date.toISOString());
   };
 
+  const handleFeedbackOpen = () => {
+    setFeedbackOpen(true);
+  };
+
+  const handleFeedbackClose = () => {
+    setFeedbackOpen(false);
+  };
+
+  // Listen for feedback submission success to show toast
+  // This is handled in FeedbackModal but we add a custom event listener for toast
   // Keyboard shortcuts
   useScreenshotShortcut(() => {
     // Trigger screenshot via a custom event or ref
@@ -56,13 +79,19 @@ function UIOverlayContent() {
 
   return (
     <div className="ui-overlay">
-      {/* Top bar with title, search, and date picker */}
+      {/* Top bar with title, search, date picker, and language toggle */}
       <div className="top-bar">
-        <div className="title">Universe Explorer</div>
+        <div className="title">{t('app.title')}</div>
         <SearchBar
           onSelect={handleSelectBody}
         />
         <DatePicker onDateChange={handleDateChange} />
+        <LanguageToggle />
+      </div>
+
+      {/* APOD Panel */}
+      <div className="apod-panel-wrapper">
+        <APODPanel />
       </div>
 
       {/* Eclipse Indicator */}
@@ -86,6 +115,12 @@ function UIOverlayContent() {
       {/* Settings Panel */}
       <SettingsPanel />
 
+      {/* Guided Tour Controls */}
+      <TourControls />
+
+      {/* Achievements Panel */}
+      <AchievementsPanel />
+
       {/* Info Card (appears when body selected) */}
       {selectedBody && (
         <InfoCard
@@ -100,16 +135,28 @@ function UIOverlayContent() {
           surfaceRegion={surfaceRegion}
         />
       )}
+
+      {/* Floating Feedback Button */}
+      <FloatingFeedbackButton onOpenFeedback={handleFeedbackOpen} />
+
+      {/* Feedback Modal */}
+      <FeedbackModal isOpen={feedbackOpen} onClose={handleFeedbackClose} />
     </div>
   )
 }
 
 export function UIOverlay() {
   return (
-    <CameraControlsProvider>
-      <SurfaceZoomProvider>
-        <UIOverlayContent />
-      </SurfaceZoomProvider>
-    </CameraControlsProvider>
+    <ToastProvider>
+      <CameraControlsProvider>
+        <SurfaceZoomProvider>
+          <TourProvider>
+            <AchievementsProvider>
+              <UIOverlayContent />
+            </AchievementsProvider>
+          </TourProvider>
+        </SurfaceZoomProvider>
+      </CameraControlsProvider>
+    </ToastProvider>
   );
 }

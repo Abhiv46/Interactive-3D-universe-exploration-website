@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
@@ -6,6 +6,7 @@ import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
 import { useSimulationClock } from '@/hooks/useSimulationClock';
 import { Moon } from './Moon';
 import { useScale } from '@/context/ScaleContext';
+import { trackPlanetClick } from '@/lib/analytics';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -101,20 +102,11 @@ export function Planet({
   }), [orbitColor, orbitOpacity, data.visual.orbitColor]);
 
   // Handle click for selection
-  useEffect(() => {
-    if (!onClick) return;
-    const mesh = meshRef.current;
-    if (!mesh) return;
-
-    const handleClick = (event: THREE.Intersection) => {
-      if (event.object === mesh || event.object.parent === mesh) {
-        onClick(data);
-      }
-    };
-
-    // We need to attach to raycaster - this is a simplified approach
-    // In practice, you'd use @react-three/drei's useRaycaster or similar
-    return () => {};
+  const handlePlanetClick = useCallback(() => {
+    if (onClick) {
+      onClick(data);
+      trackPlanetClick(data.id, data.name, 'click');
+    }
   }, [onClick, data]);
 
   // Axial rotation
@@ -316,7 +308,7 @@ export function Planet({
         rotation={[-data.physical.axialTilt, 0, 0]}
         castShadow
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onClick?.(data); }}
+        onClick={(e) => { e.stopPropagation(); handlePlanetClick(); }}
       />
 
       {/* Rings (if applicable) - Saturn, Uranus, Neptune */}

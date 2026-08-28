@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { searchCatalog, getObjectById, SearchResult, CELESTIAL_TYPES } from '@/data';
+import { trackEvent, ANALYTICS_EVENTS, trackPlanetClick } from '@/lib/analytics';
 
 interface SearchBarProps {
   onSelect: (object: {
@@ -82,6 +83,16 @@ export function SearchBar({ onSelect }: SearchBarProps) {
         position: new THREE.Vector3(0, 0, 0), // Will be updated by the scene
         data: fullObject,
       });
+
+      // Track search selection
+      trackEvent(ANALYTICS_EVENTS.SEARCH_USED, {
+        query: query.trim(),
+        result_id: result.id,
+        result_name: result.name,
+        result_type: result.type,
+      });
+
+      trackPlanetClick(result.id, result.name, 'search');
     }
     setQuery('');
     setResults([]);
@@ -212,6 +223,16 @@ export function QuickSearchButtons({ onSelect }: { onSelect: (object: any) => vo
                 position: new THREE.Vector3(0, 0, 0),
                 data: result,
               });
+
+              // Track quick search selection
+              trackEvent(ANALYTICS_EVENTS.SEARCH_USED, {
+                query: 'quick_search',
+                result_id: result.id,
+                result_name: result.name,
+                result_type: result.type,
+              });
+
+              trackPlanetClick(result.id, result.name, 'click');
             }
           }}
         >

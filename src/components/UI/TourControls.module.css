@@ -1,0 +1,491 @@
+.container {
+  position: relative;
+  z-index: 100;
+}
+
+.startButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--accent-color, #6366f1), var(--accent-hover, #4f46e5));
+  border: none;
+  border-radius: 50px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.startButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.5);
+}
+
+.startButton:focus-visible {
+  outline: 2px solid var(--accent-color, #6366f1);
+  outline-offset: 3px;
+}
+
+.startButton:active {
+  transform: translateY(0);
+}
+
+/* Expanded panel */
+.expanded {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 380px;
+  max-height: calc(100vh - 100px);
+  background: var(--bg-secondary, rgba(20, 20, 40, 0.98));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-tertiary, rgba(30, 30, 50, 0.9));
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  cursor: pointer;
+  user-select: none;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tourTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progressBar {
+  flex: 1;
+  max-width: 150px;
+  height: 6px;
+  background: var(--bg-primary, #0a0a15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color, #6366f1), var(--accent-secondary, #a855f7));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+  font-weight: 500;
+  min-width: 60px;
+  text-align: right;
+}
+
+.toggleButton,
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover,
+.closeButton:hover {
+  background: var(--bg-primary, #0a0a15);
+  color: var(--text-primary, #fff);
+}
+
+.toggleButton:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid var(--accent-color, #6366f1);
+  outline-offset: 2px;
+}
+
+.content {
+  padding: 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+/* Current Stop Card */
+.currentStopCard {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.stopNumber {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.stopLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-color, #6366f1);
+}
+
+.stopIndex {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+}
+
+.stopName {
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  line-height: 1.2;
+}
+
+.narration {
+  padding: 16px;
+  background: var(--bg-primary, #0a0a15);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
+}
+
+.narration p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary, #ccc);
+}
+
+.stopActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-tertiary, rgba(30, 30, 50, 0.8));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 10px;
+  color: var(--text-secondary, #aaa);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  background: var(--accent-color, rgba(99, 102, 241, 0.15));
+  border-color: var(--accent-color, #6366f1);
+  color: var(--text-primary, #fff);
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid var(--accent-color, #6366f1);
+  outline-offset: 2px;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.controlButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: var(--bg-tertiary, rgba(30, 30, 50, 0.9));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 50%;
+  color: var(--text-primary, #fff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controlButton:hover:not(:disabled) {
+  background: var(--accent-color, rgba(99, 102, 241, 0.2));
+  border-color: var(--accent-color, #6366f1);
+  transform: scale(1.05);
+}
+
+.controlButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.controlButton:focus-visible {
+  outline: 2px solid var(--accent-color, #6366f1);
+  outline-offset: 2px;
+}
+
+.playPauseButton {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--accent-color, #6366f1), var(--accent-hover, #4f46e5));
+  border: none;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+.playPauseButton:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.5);
+}
+
+.playPauseButton.playing {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Stop List */
+.stopList {
+  padding: 16px 20px 20px;
+}
+
+.stopListTitle {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-color, #6366f1);
+}
+
+.stopListItems {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stopListItem {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: background 0.2s ease;
+}
+
+.stopListItem.completed {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.stopListItem.active {
+  background: var(--accent-color, rgba(99, 102, 241, 0.15));
+}
+
+.stopListButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #aaa);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stopListButton:hover {
+  color: var(--text-primary, #fff);
+  background: var(--bg-primary, #0a0a15);
+}
+
+.stopListButton:focus-visible {
+  outline: 2px solid var(--accent-color, #6366f1);
+  outline-offset: -2px;
+}
+
+.stopListItem.active .stopListButton {
+  color: var(--accent-color, #6366f1);
+  font-weight: 600;
+}
+
+.stopListItem.completed .stopListButton {
+  color: #10b981;
+}
+
+.stopListIndex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.stopListItem.completed .stopListIndex {
+  background: #10b981;
+  color: #fff;
+}
+
+.stopListItem.active .stopListIndex {
+  background: var(--accent-color, #6366f1);
+  color: #fff;
+}
+
+.stopListItem:not(.completed):not(.active) .stopListIndex {
+  background: var(--bg-primary, #0a0a15);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  color: var(--text-secondary, #888);
+}
+
+.checkIcon {
+  font-size: 14px;
+}
+
+.stopListName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .expanded {
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height: calc(100vh - 90px);
+  }
+
+  .tourTitle {
+    max-width: 140px;
+  }
+
+  .progressBar {
+    max-width: 100px;
+  }
+
+  .currentStopCard {
+    padding: 16px;
+  }
+
+  .stopName {
+    font-size: 20px;
+  }
+
+  .controls {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .controlButton {
+    width: 48px;
+    height: 48px;
+  }
+
+  .playPauseButton {
+    width: 56px;
+    height: 56px;
+  }
+
+  .stopList {
+    padding: 12px 16px 16px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .expanded,
+  .progressFill,
+  .controlButton,
+  .startButton,
+  .actionButton,
+  .stopListButton {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .expanded {
+    border-width: 2px;
+  }
+
+  .startButton {
+    border: 2px solid currentColor;
+  }
+
+  .controlButton {
+    border-width: 2px;
+  }
+
+  .actionButton {
+    border-width: 2px;
+  }
+
+  .stopListButton:focus-visible,
+  .controlButton:focus-visible,
+  .startButton:focus-visible,
+  .actionButton:focus-visible,
+  .toggleButton:focus-visible,
+  .closeButton:focus-visible {
+    outline-width: 3px;
+  }
+}

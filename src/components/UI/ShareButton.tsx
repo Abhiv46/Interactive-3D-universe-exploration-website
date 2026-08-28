@@ -4,6 +4,9 @@ import { useSimulationClock } from '@/hooks/useSimulationClock';
 import { useSettings, SettingsState } from '@/context/SettingsContext';
 import { useCameraControls } from '@/hooks/useCameraControls';
 import { useShareView, useApplySharedView, parseShareUrlFromLocation, ShareViewState } from '@/hooks/useShareView';
+import { useAchievements } from '@/context/AchievementsContext';
+import { useOGImageGenerator, useOGMetaTags } from '@/components/UI/OGImageGenerator';
+import { useI18n } from '@/i18n/index';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import * as THREE from 'three';
 
@@ -13,6 +16,7 @@ export function ShareButton() {
   const { settings } = useSettings();
   const { getControls } = useCameraControls();
   const [selectedBody, setSelectedBody] = useState<CelestialBodyData | null>(null);
+  const { t } = useI18n();
 
   const {
     generateShareUrl,
@@ -23,9 +27,14 @@ export function ShareButton() {
     decodeShareState,
   } = useShareView();
 
+  const { unlockAchievement } = useAchievements();
+  const { generateOGImage, generateDataURL, downloadOGImage, isGenerating: isGeneratingImage } = useOGImageGenerator();
+  const { updateOGMetaTags, resetOGMetaTags } = useOGMetaTags();
+
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,7 +52,7 @@ export function ShareButton() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleShareClick = useCallback(() => {
+  const handleShareClick = useCallback(async () => {
     const baseUrl = window.location.origin + window.location.pathname;
     const url = generateShareUrl(
       baseUrl,
@@ -59,10 +68,31 @@ export function ShareButton() {
     setCopied(false);
     setShareError(null);
     setShowShareDialog(true);
+    setImageDataUrl(null);
+
+    // Generate OG image in background
+    try {
+      const dataUrl = await generateDataURL({
+        title: t('share.ogTitle'),
+        bodyName: selectedBody?.name,
+      });
+      if (dataUrl) {
+        setImageDataUrl(dataUrl);
+        // Update meta tags for social sharing
+        updateOGMetaTags(
+          t('share.ogTitle'),
+          t('share.ogDescription', { body: selectedBody?.name || 'the cosmos' }),
+          dataUrl,
+          url
+        );
+      }
+    } catch (error) {
+      console.warn('Failed to generate OG image:', error);
+    }
 
     // Focus the input after dialog opens
     setTimeout(() => urlInputRef.current?.focus(), 50);
-  }, [generateShareUrl, camera, controls, julianDate, timeScale, isRunning, selectedBody, settings]);
+  }, [generateShareUrl, camera, controls, julianDate, timeScale, isRunning, selectedBody, settings, generateDataURL, updateOGMetaTags, t]);
 
   const handleCopy = useCallback(async () => {
     if (!lastUrl) return;
@@ -71,12 +101,13 @@ export function ShareButton() {
     if (success) {
       setCopied(true);
       setShareError(null);
+      unlockAchievement('sharedView');
       // Reset copied state after 2 seconds
       setTimeout(() => setCopied(false), 2000);
     } else {
       setShareError('Failed to copy to clipboard');
     }
-  }, [copyShareUrl, lastUrl]);
+  }, [copyShareUrl, lastUrl, unlockAchievement]);
 
   const handleNativeShare = useCallback(async () => {
     if (!lastUrl) return;
@@ -187,7 +218,21 @@ export function ShareButton() {
                 >
                   🔄 Load This View
                 </button>
+                <button
+                  className="glass-btn secondary"
+                  onClick={() => downloadOGImage({ title: t('share.ogTitle'), bodyName: selectedBody?.name })}
+                  disabled={isGeneratingImage || !imageDataUrl}
+                >
+                  🖼️ Download Image
+                </button>
               </div>
+
+              {imageDataUrl && (
+                <div className="share-image-preview">
+                  <label>{t('share.imagePreview')}</label>
+                  <img src={imageDataUrl} alt="Preview of shared image" />
+                </div>
+              )}
 
               <div className="share-note">
                 <small>

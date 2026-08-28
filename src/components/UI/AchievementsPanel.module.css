@@ -1,0 +1,442 @@
+.container {
+  position: relative;
+  z-index: 100;
+}
+
+.startButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  border-radius: 50px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.startButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(245, 158, 11, 0.5);
+}
+
+.startButton:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.startButton:active {
+  transform: translateY(0);
+}
+
+.badge {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Expanded panel */
+.expanded {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 400px;
+  max-height: calc(100vh - 100px);
+  background: var(--bg-secondary, rgba(20, 20, 40, 0.98));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  animation: slideInRight 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-tertiary, rgba(30, 30, 50, 0.9));
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-primary, #0a0a15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  white-space: nowrap;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  background: var(--bg-primary, #0a0a15);
+  color: var(--text-primary, #fff);
+}
+
+.toggleButton:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.filterButton {
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 20px;
+  color: var(--text-secondary, #888);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filterButton:hover {
+  border-color: var(--accent-color, #f59e0b);
+  color: var(--text-primary, #fff);
+}
+
+.filterButton.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: transparent;
+  color: #fff;
+}
+
+.filterButton:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary, #666);
+  gap: 12px;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg-tertiary, rgba(30, 30, 50, 0.6));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.item:hover {
+  border-color: var(--accent-color, rgba(245, 158, 11, 0.3));
+  background: var(--bg-tertiary, rgba(30, 30, 50, 0.9));
+}
+
+.item.unlocked {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.item.locked {
+  opacity: 0.7;
+}
+
+.iconWrapper {
+  position: relative;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #0a0a15);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.item.unlocked .iconWrapper {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+}
+
+.icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.lockIcon {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  color: var(--text-secondary, #666);
+  background: var(--bg-secondary, rgba(20, 20, 40, 0.9));
+  padding: 2px;
+  border-radius: 50%;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  line-height: 1.3;
+}
+
+.item.locked .name {
+  color: var(--text-secondary, #888);
+}
+
+.description {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary, #aaa);
+}
+
+.item.locked .description {
+  color: var(--text-secondary, #666);
+}
+
+.unlockedAt {
+  font-size: 11px;
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.unlockedBadge {
+  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 12px;
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lockedBadge {
+  padding: 4px 10px;
+  background: var(--bg-primary, #0a0a15);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 12px;
+  color: var(--text-secondary, #666);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .expanded {
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height: calc(100vh - 90px);
+  }
+
+  .progressContainer {
+    min-width: 140px;
+  }
+
+  .filters {
+    padding: 10px 12px;
+  }
+
+  .filterButton {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .content {
+    padding: 12px;
+  }
+
+  .item {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .iconWrapper {
+    width: 48px;
+    height: 48px;
+  }
+
+  .icon {
+    font-size: 24px;
+  }
+
+  .name {
+    font-size: 14px;
+  }
+
+  .description {
+    font-size: 12px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .expanded,
+  .progressFill,
+  .item,
+  .startButton,
+  .filterButton {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .expanded {
+    border-width: 2px;
+  }
+
+  .startButton {
+    border: 2px solid currentColor;
+  }
+
+  .item {
+    border-width: 2px;
+  }
+
+  .filterButton {
+    border-width: 2px;
+  }
+
+  .filterButton.active {
+    border: 2px solid currentColor;
+  }
+
+  .unlockedBadge,
+  .lockedBadge {
+    border-width: 2px;
+  }
+
+  .filterButton:focus-visible,
+  .toggleButton:focus-visible,
+  .startButton:focus-visible {
+    outline-width: 3px;
+  }
+}

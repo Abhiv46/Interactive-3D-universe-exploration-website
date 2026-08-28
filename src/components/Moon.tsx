@@ -1,10 +1,11 @@
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
 import { useSimulationClock } from '@/hooks/useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
+import { trackPlanetClick } from '@/lib/analytics';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -89,12 +90,12 @@ export function Moon({
     depthWrite: false,
   }), [orbitColor, orbitOpacity, data.visual.orbitColor]);
 
-  // Handle click
-  useEffect(() => {
-    if (!onClick) return;
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    return () => {};
+  // Handle click for selection
+  const handleMoonClick = useCallback(() => {
+    if (onClick) {
+      onClick(data);
+      trackPlanetClick(data.id, data.name, 'click');
+    }
   }, [onClick, data]);
 
   // Axial rotation
@@ -136,7 +137,7 @@ export function Moon({
         rotation={[-data.physical.axialTilt, 0, 0]}
         castShadow
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onClick?.(data); }}
+        onClick={(e) => { e.stopPropagation(); handleMoonClick(); }}
       />
     </group>
   );

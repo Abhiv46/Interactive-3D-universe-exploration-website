@@ -459,3 +459,78 @@ export function getFocusableElements(container: HTMLElement): HTMLElement[] {
 
   return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(isVisibleToScreenReader);
 }
+
+/**
+ * Internationalization/translation placeholder
+ * In a real app, this would use react-i18next or similar
+ */
+const translations: Record<string, string> = {
+  // Common
+  'common.close': 'Close',
+  'common.cancel': 'Cancel',
+  'common.sending': 'Sending...',
+  'common.done': 'Done',
+  'common.optional': 'Optional',
+
+  // Feedback
+  'feedback.sendFeedback': 'Send Feedback',
+  'feedback.reportBug': 'Report a Bug',
+  'feedback.feedbackDescription': 'Help us improve Universe Explorer with your suggestions',
+  'feedback.bugDescription': 'Report a problem you encountered',
+  'feedback.feedback': 'Feedback',
+  'feedback.bug': 'Bug Report',
+  'feedback.typeLabel': 'Feedback type',
+  'feedback.ratingLabel': 'How would you rate your experience?',
+  'feedback.star': 'star',
+  'feedback.ratingHint': 'Click a star to rate',
+  'feedback.ratingRequired': 'Please select a rating',
+  'feedback.messageLabel': 'Message',
+  'feedback.messageRequired': 'Please enter a message',
+  'feedback.feedbackPlaceholder': 'What can we improve? What do you like?',
+  'feedback.bugPlaceholder': 'Describe the bug, steps to reproduce, expected vs actual behavior...',
+  'feedback.bugHint': 'Include steps to reproduce, browser/device info, and any error messages',
+  'feedback.emailLabel': 'Email',
+  'feedback.emailPlaceholder': 'your@email.com (optional, for follow-up)',
+  'feedback.submitFeedback': 'Submit Feedback',
+  'feedback.submitBug': 'Submit Bug Report',
+  'feedback.submitError': 'Failed to submit. Please try again.',
+  'feedback.submitted': 'Submitted successfully!',
+  'feedback.thankYou': 'Thank you for your feedback!',
+  'feedback.floatingLabel': 'Feedback',
+  'feedback.floatingHint': 'Press to open feedback dialog',
+
+  // Toast
+  'toast.regionLabel': 'Notifications',
+};
+
+/**
+ * Combined accessibility hook with translation support
+ */
+export function useAccessibility() {
+  const { announce, announceImmediate } = useAnnouncer();
+
+  const t = useCallback((key: string): string => {
+    return translations[key] || key;
+  }, []);
+
+  return {
+    t,
+    announce,
+    announceImmediate,
+    queueAnnouncement,
+    trapFocus,
+    restoreFocus,
+    useFocusTrap,
+    useKeyboardNavigation,
+    useReducedMotion,
+    useHighContrast,
+    useFocusVisible,
+    ariaLabels,
+    generateId,
+    SkipLink,
+    LiveRegion,
+    useLiveRegion,
+    isVisibleToScreenReader,
+    getFocusableElements,
+  };
+}

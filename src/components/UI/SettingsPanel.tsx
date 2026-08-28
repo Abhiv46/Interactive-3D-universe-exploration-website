@@ -4,6 +4,7 @@ import { useAudioEngine } from '../../hooks/useAudioEngine';
 import { TimeSpeed } from '../../engine/SimulationClock';
 import { useSettings } from '@/context/SettingsContext';
 import { useFocusTrap, generateId } from '@/hooks/useAccessibility';
+import { trackEvent, ANALYTICS_EVENTS, trackSettingsChange } from '@/lib/analytics';
 
 export function SettingsPanel() {
   const { settings, setSettings, resetToDefaults } = useSettings();
@@ -40,6 +41,8 @@ export function SettingsPanel() {
   const handleTimeSpeedChange = (speed: number) => {
     clockControls.setSpeed(speed as TimeSpeed);
     setSettings({ timeSpeed: speed });
+    trackSettingsChange('timeSpeed', speed);
+    trackEvent(ANALYTICS_EVENTS.TIME_CONTROL_USED, { speed });
   };
 
   const formatTimeSpeed = (speed: number): string => {
@@ -160,7 +163,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showOrbits}
-                  onChange={() => setSettings({ showOrbits: !settings.showOrbits })}
+                  onChange={() => {
+                    const value = !settings.showOrbits;
+                    setSettings({ showOrbits: value });
+                    trackSettingsChange('showOrbits', value);
+                  }}
                 />
                 <span>Show Orbit Lines</span>
               </label>
@@ -168,7 +175,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showLabels}
-                  onChange={() => setSettings({ showLabels: !settings.showLabels })}
+                  onChange={() => {
+                    const value = !settings.showLabels;
+                    setSettings({ showLabels: value });
+                    trackSettingsChange('showLabels', value);
+                  }}
                 />
                 <span>Show Labels</span>
               </label>
@@ -176,7 +187,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showConstellations}
-                  onChange={() => setSettings({ showConstellations: !settings.showConstellations })}
+                  onChange={() => {
+                    const value = !settings.showConstellations;
+                    setSettings({ showConstellations: value });
+                    trackSettingsChange('showConstellations', value);
+                  }}
                 />
                 <span>Show Constellations</span>
               </label>
@@ -184,7 +199,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showMilkyWay}
-                  onChange={() => setSettings({ showMilkyWay: !settings.showMilkyWay })}
+                  onChange={() => {
+                    const value = !settings.showMilkyWay;
+                    setSettings({ showMilkyWay: value });
+                    trackSettingsChange('showMilkyWay', value);
+                  }}
                 />
                 <span>Show Milky Way</span>
               </label>
@@ -192,7 +211,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showAsteroidBelt}
-                  onChange={() => setSettings({ showAsteroidBelt: !settings.showAsteroidBelt })}
+                  onChange={() => {
+                    const value = !settings.showAsteroidBelt;
+                    setSettings({ showAsteroidBelt: value });
+                    trackSettingsChange('showAsteroidBelt', value);
+                  }}
                 />
                 <span>Show Asteroid Belt</span>
               </label>
@@ -200,7 +223,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showKuiperBelt}
-                  onChange={() => setSettings({ showKuiperBelt: !settings.showKuiperBelt })}
+                  onChange={() => {
+                    const value = !settings.showKuiperBelt;
+                    setSettings({ showKuiperBelt: value });
+                    trackSettingsChange('showKuiperBelt', value);
+                  }}
                 />
                 <span>Show Kuiper Belt</span>
               </label>
@@ -208,7 +235,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showComets}
-                  onChange={() => setSettings({ showComets: !settings.showComets })}
+                  onChange={() => {
+                    const value = !settings.showComets;
+                    setSettings({ showComets: value });
+                    trackSettingsChange('showComets', value);
+                  }}
                 />
                 <span>Show Comets</span>
               </label>
@@ -216,7 +247,12 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showISS}
-                  onChange={() => setSettings({ showISS: !settings.showISS })}
+                  onChange={() => {
+                    const value = !settings.showISS;
+                    setSettings({ showISS: value });
+                    trackSettingsChange('showISS', value);
+                    trackEvent(ANALYTICS_EVENTS.ISS_TRACKED, { enabled: value });
+                  }}
                 />
                 <span>Show ISS Tracker (Live)</span>
               </label>
@@ -224,7 +260,12 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.showAurora}
-                  onChange={() => setSettings({ showAurora: !settings.showAurora })}
+                  onChange={() => {
+                    const value = !settings.showAurora;
+                    setSettings({ showAurora: value });
+                    trackSettingsChange('showAurora', value);
+                    trackEvent(ANALYTICS_EVENTS.AURORA_VIEWED, { enabled: value });
+                  }}
                 />
                 <span>Show Aurora Effect</span>
               </label>
@@ -236,7 +277,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.trueScale}
-                  onChange={() => setSettings({ trueScale: !settings.trueScale })}
+                  onChange={() => {
+                    const value = !settings.trueScale;
+                    setSettings({ trueScale: value });
+                    trackSettingsChange('trueScale', value);
+                  }}
                 />
                 <span>True Scale (realistic sizes/distances)</span>
               </label>
@@ -248,7 +293,11 @@ export function SettingsPanel() {
                   max="1000000"
                   step="100"
                   value={settings.visualScaleFactor}
-                  onChange={(e) => setSettings({ visualScaleFactor: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setSettings({ visualScaleFactor: value });
+                    trackSettingsChange('visualScaleFactor', value);
+                  }}
                   disabled={settings.trueScale}
                 />
               </div>
@@ -270,7 +319,11 @@ export function SettingsPanel() {
                 <label>Mode</label>
                 <select
                   value={settings.cameraMode}
-                  onChange={(e) => setSettings({ cameraMode: e.target.value as 'free' | 'orbit' })}
+                  onChange={(e) => {
+                    const value = e.target.value as 'free' | 'orbit';
+                    setSettings({ cameraMode: value });
+                    trackSettingsChange('cameraMode', value);
+                  }}
                 >
                   <option value="free">Free Fly (WASD)</option>
                   <option value="orbit">Orbit Focus (Click to Lock)</option>
@@ -284,7 +337,11 @@ export function SettingsPanel() {
                   max="1000000000"
                   step="100"
                   value={settings.cameraSpeed}
-                  onChange={(e) => setSettings({ cameraSpeed: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setSettings({ cameraSpeed: value });
+                    trackSettingsChange('cameraSpeed', value);
+                  }}
                 />
               </div>
             </div>
@@ -305,7 +362,10 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={audioState.enabled}
-                  onChange={() => toggleAudio()}
+                  onChange={() => {
+                    toggleAudio();
+                    trackSettingsChange('audioEnabled', !audioState.enabled);
+                  }}
                 />
                 <span>Enable Spatial Audio</span>
               </label>
@@ -317,7 +377,11 @@ export function SettingsPanel() {
                   max="1"
                   step="0.05"
                   value={audioState.masterGain}
-                  onChange={(e) => setMasterGain(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setMasterGain(value);
+                    trackSettingsChange('masterGain', value);
+                  }}
                   disabled={!audioState.enabled}
                 />
               </div>
@@ -345,7 +409,11 @@ export function SettingsPanel() {
               <div className="setting-select">
                 <select
                   value={settings.qualityPreset}
-                  onChange={(e) => setSettings({ qualityPreset: e.target.value as 'low' | 'medium' | 'high' | 'ultra' })}
+                  onChange={(e) => {
+                    const value = e.target.value as 'low' | 'medium' | 'high' | 'ultra';
+                    setSettings({ qualityPreset: value });
+                    trackSettingsChange('qualityPreset', value);
+                  }}
                 >
                   <option value="low">Low (Potato)</option>
                   <option value="medium">Medium</option>
@@ -359,7 +427,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.enableBloom}
-                  onChange={() => setSettings({ enableBloom: !settings.enableBloom })}
+                  onChange={() => {
+                    const value = !settings.enableBloom;
+                    setSettings({ enableBloom: value });
+                    trackSettingsChange('enableBloom', value);
+                  }}
                 />
                 <span>Bloom Effect</span>
               </label>
@@ -367,7 +439,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.enableFXAA}
-                  onChange={() => setSettings({ enableFXAA: !settings.enableFXAA })}
+                  onChange={() => {
+                    const value = !settings.enableFXAA;
+                    setSettings({ enableFXAA: value });
+                    trackSettingsChange('enableFXAA', value);
+                  }}
                 />
                 <span>FXAA Anti-aliasing</span>
               </label>
@@ -375,7 +451,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.enableGodRays}
-                  onChange={() => setSettings({ enableGodRays: !settings.enableGodRays })}
+                  onChange={() => {
+                    const value = !settings.enableGodRays;
+                    setSettings({ enableGodRays: value });
+                    trackSettingsChange('enableGodRays', value);
+                  }}
                 />
                 <span>God Rays (Volumetric Lighting)</span>
               </label>
@@ -383,7 +463,11 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.enableVignette}
-                  onChange={() => setSettings({ enableVignette: !settings.enableVignette })}
+                  onChange={() => {
+                    const value = !settings.enableVignette;
+                    setSettings({ enableVignette: value });
+                    trackSettingsChange('enableVignette', value);
+                  }}
                 />
                 <span>Vignette</span>
               </label>
@@ -397,7 +481,11 @@ export function SettingsPanel() {
                   max="2"
                   step="0.05"
                   value={settings.bloomIntensity}
-                  onChange={(e) => setSettings({ bloomIntensity: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setSettings({ bloomIntensity: value });
+                    trackSettingsChange('bloomIntensity', value);
+                  }}
                   disabled={!settings.enableBloom}
                 />
               </div>
@@ -409,7 +497,11 @@ export function SettingsPanel() {
                   max="1"
                   step="0.05"
                   value={settings.bloomThreshold}
-                  onChange={(e) => setSettings({ bloomThreshold: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setSettings({ bloomThreshold: value });
+                    trackSettingsChange('bloomThreshold', value);
+                  }}
                   disabled={!settings.enableBloom}
                 />
               </div>
@@ -421,7 +513,11 @@ export function SettingsPanel() {
                   max="1"
                   step="0.05"
                   value={settings.bloomSmoothing}
-                  onChange={(e) => setSettings({ bloomSmoothing: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setSettings({ bloomSmoothing: value });
+                    trackSettingsChange('bloomSmoothing', value);
+                  }}
                   disabled={!settings.enableBloom}
                 />
               </div>
@@ -435,7 +531,11 @@ export function SettingsPanel() {
                   max="3"
                   step="0.05"
                   value={settings.toneMappingExposure}
-                  onChange={(e) => setSettings({ toneMappingExposure: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setSettings({ toneMappingExposure: value });
+                    trackSettingsChange('toneMappingExposure', value);
+                  }}
                 />
               </div>
 
@@ -448,7 +548,11 @@ export function SettingsPanel() {
                   max="200000"
                   step="5000"
                   value={settings.starCount}
-                  onChange={(e) => setSettings({ starCount: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setSettings({ starCount: value });
+                    trackSettingsChange('starCount', value);
+                  }}
                 />
               </div>
 
@@ -457,7 +561,12 @@ export function SettingsPanel() {
                 <input
                   type="checkbox"
                   checked={settings.lowPerformanceMode}
-                  onChange={() => setSettings({ lowPerformanceMode: !settings.lowPerformanceMode })}
+                  onChange={() => {
+                    const value = !settings.lowPerformanceMode;
+                    setSettings({ lowPerformanceMode: value });
+                    trackSettingsChange('lowPerformanceMode', value);
+                    trackEvent(ANALYTICS_EVENTS.LOW_PERFORMANCE_TOGGLED, { enabled: value });
+                  }}
                 />
                 <span>Enable Low Performance Mode</span>
               </label>
@@ -475,14 +584,22 @@ export function SettingsPanel() {
                       max="50000"
                       step="1000"
                       value={settings.reducedStarCount}
-                      onChange={(e) => setSettings({ reducedStarCount: Number(e.target.value) })}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setSettings({ reducedStarCount: value });
+                        trackSettingsChange('reducedStarCount', value);
+                      }}
                     />
                   </div>
                   <label className="setting-toggle">
                     <input
                       type="checkbox"
                       checked={settings.simplifiedBelts}
-                      onChange={() => setSettings({ simplifiedBelts: !settings.simplifiedBelts })}
+                      onChange={() => {
+                        const value = !settings.simplifiedBelts;
+                        setSettings({ simplifiedBelts: value });
+                        trackSettingsChange('simplifiedBelts', value);
+                      }}
                     />
                     <span>Simplify Asteroid/Kuiper Belts (fewer particles)</span>
                   </label>
@@ -490,7 +607,11 @@ export function SettingsPanel() {
                     <input
                       type="checkbox"
                       checked={settings.disablePostProcessing}
-                      onChange={() => setSettings({ disablePostProcessing: !settings.disablePostProcessing })}
+                      onChange={() => {
+                        const value = !settings.disablePostProcessing;
+                        setSettings({ disablePostProcessing: value });
+                        trackSettingsChange('disablePostProcessing', value);
+                      }}
                     />
                     <span>Disable All Post-Processing (bloom, FXAA, vignette, god rays)</span>
                   </label>
@@ -550,7 +671,10 @@ export function SettingsPanel() {
                     <button
                       key={label}
                       className="preset-btn"
-                      onClick={() => clockControls.setDate(date)}
+                      onClick={() => {
+                        clockControls.setDate(date);
+                        trackEvent(ANALYTICS_EVENTS.DATE_PICKER_USED, { preset: label });
+                      }}
                     >
                       {label}
                     </button>

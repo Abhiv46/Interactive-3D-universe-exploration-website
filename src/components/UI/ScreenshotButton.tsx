@@ -1,10 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useScreenshot } from '@/hooks/useScreenshot';
+import { useAchievements } from '@/context/AchievementsContext';
+import { useToast } from '@/components/UI/Toast';
 
 export function ScreenshotButton() {
   const { gl, camera, scene } = useThree();
   const { setRenderer, setCamera, setScene, captureScreenshot } = useScreenshot();
+  const { unlockAchievement } = useAchievements();
+  const { showToast } = useToast();
   const [isCapturing, setIsCapturing] = useState(false);
   const [lastCapture, setLastCapture] = useState<string | null>(null);
 
@@ -28,18 +32,18 @@ export function ScreenshotButton() {
 
       if (dataUrl) {
         setLastCapture(dataUrl);
-        // Show brief toast notification
-        showToast('Screenshot saved! 📸');
+        unlockAchievement('screenshotTaken');
+        showToast({ type: 'success', title: 'Screenshot saved! 📸' });
       } else {
-        showToast('Screenshot failed ❌', true);
+        showToast({ type: 'error', title: 'Screenshot failed ❌' });
       }
     } catch (error) {
       console.error('Screenshot error:', error);
-      showToast('Screenshot failed ❌', true);
+      showToast({ type: 'error', title: 'Screenshot failed ❌' });
     } finally {
       setIsCapturing(false);
     }
-  }, [captureScreenshot, isCapturing]);
+  }, [captureScreenshot, isCapturing, unlockAchievement, showToast]);
 
   return (
     <button
@@ -62,58 +66,6 @@ export function ScreenshotButton() {
       )}
     </button>
   );
-}
-
-// Simple toast notification
-function showToast(message: string, isError = false) {
-  // Remove existing toast
-  const existing = document.getElementById('screenshot-toast');
-  if (existing) existing.remove();
-
-  const toast = document.createElement('div');
-  toast.id = 'screenshot-toast';
-  toast.textContent = message;
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: ${isError ? 'rgba(255, 71, 87, 0.95)' : 'rgba(0, 212, 170, 0.95)'};
-    color: #030308;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-family: var(--font-ui);
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 10000;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    animation: toastIn 0.3s ease-out forwards;
-    pointer-events: none;
-  `;
-
-  // Add animation styles if not already added
-  if (!document.getElementById('toast-styles')) {
-    const style = document.createElement('style');
-    style.id = 'toast-styles';
-    style.textContent = `
-      @keyframes toastIn {
-        from { opacity: 0; transform: translateX(-50%) translateY(100px); }
-        to { opacity: 1; transform: translateX(-50%) translateY(0); }
-      }
-      @keyframes toastOut {
-        from { opacity: 1; transform: translateX(-50%) translateY(0); }
-        to { opacity: 0; transform: translateX(-50%) translateY(100px); }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  document.body.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.animation = 'toastOut 0.3s ease-in forwards';
-    setTimeout(() => toast.remove(), 300);
-  }, 2500);
 }
 
 /**
