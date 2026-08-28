@@ -7,6 +7,8 @@ import { useSimulationClock } from '@/hooks/useSimulationClock';
 import { Moon } from './Moon';
 import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
+import { useLoading } from '@/components/UI/LoadingScreen';
+import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -49,6 +51,7 @@ export function Planet({
   const meshRef = useRef<THREE.Mesh>(null);
   const ringRefs = useRef<THREE.Mesh[]>([]);
   const { trueScale: contextTrueScale } = useScale();
+  const { onTextureLoad } = useLoading();
 
   // Use context trueScale if not explicitly overridden
   const effectiveTrueScale = trueScale ?? contextTrueScale;
@@ -82,16 +85,22 @@ export function Planet({
   // For rings, scale the ring radii appropriately
   const ringScale = effectiveTrueScale ? 1 : visualScale;
 
+  // Load textures with progress reporting and fallback
+  const textureMap = useSafeTextureLoader(
+    data.visual.textures?.diffuse,
+    data.visual.baseColor
+  );
+
   // Create material with planet's base color
   const material = useMemo(() => {
     const baseColor = new THREE.Color(data.visual.baseColor);
     return new THREE.MeshStandardMaterial({
+      map: textureMap,
       color: baseColor,
       roughness: 0.7,
       metalness: 0.1,
-      // Use toneMapped: false for emissive planets if needed
     });
-  }, [data.visual.baseColor]);
+  }, [data.visual.baseColor, textureMap]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({

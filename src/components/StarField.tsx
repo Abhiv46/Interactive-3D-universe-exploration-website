@@ -1,9 +1,10 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { BRIGHT_STARS, generateAdditionalStars, bvToColor, magnitudeToPointSize, filterStarsByMagnitude, getStarCatalog } from '@/data/stars';
+import { BRIGHT_STARS, generateAdditionalStars, bvToColor, magnitudeToPointSize, filterStarsByMagnitude, getStarCatalog, loadFullStarCatalog } from '@/data/stars';
 import { CONSTELLATIONS, Constellation, ConstellationLine } from '@/data/constellations';
 import { DEG_TO_RAD } from '@/engine/Constants';
+import { useLoading } from '@/components/UI/LoadingScreen';
 
 interface StarFieldProps {
   /** Distance at which to render stars (should be far behind solar system) */
@@ -217,15 +218,18 @@ export function StarFieldWrapper({
   showConstellations = false,
 }: StarFieldProps) {
   const [catalogReady, setCatalogReady] = useState(false);
+  const { onStarDataLoad } = useLoading();
 
   useEffect(() => {
-    // Load full catalog async
-    import('@/data/stars').then(({ loadFullStarCatalog }) => {
-      loadFullStarCatalog().then(() => {
-        setCatalogReady(true);
-      });
+    // Load full catalog async with progress reporting
+    loadFullStarCatalog().then((catalog) => {
+      setCatalogReady(true);
+      // Report total star count loaded
+      if (onStarDataLoad) {
+        onStarDataLoad(catalog.length);
+      }
     });
-  }, []);
+  }, [onStarDataLoad]);
 
   // For now, render with initial catalog, upgrade when ready
   return (

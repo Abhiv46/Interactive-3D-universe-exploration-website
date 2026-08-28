@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 interface LoadingScreenProps {
   onComplete: () => void;
   progress?: number; // 0-1
+  loadedAssets?: LoadingAssets;
+  expectedAssets?: LoadingAssets;
 }
 
 interface LoadingAssets {
@@ -21,15 +23,9 @@ const LOADING_STAGES = [
   { name: 'Compiling shaders...', weight: 0.05 },
 ];
 
-export function LoadingScreen({ onComplete, progress: externalProgress }: LoadingScreenProps) {
+export function LoadingScreen({ onComplete, progress: externalProgress, loadedAssets, expectedAssets }: LoadingScreenProps) {
   const [stage, setStage] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [assetsLoaded, setAssetsLoaded] = useState<LoadingAssets>({
-    textures: 0,
-    starData: 0,
-    shaders: 0,
-    total: 0,
-  });
   const [isComplete, setIsComplete] = useState(false);
   const [showUI, setShowUI] = useState(false);
 
@@ -133,15 +129,15 @@ export function LoadingScreen({ onComplete, progress: externalProgress }: Loadin
           <div className="loading-details">
             <div className="detail-row">
               <span>Textures:</span>
-              <span>{assetsLoaded.textures} / {assetsLoaded.total}</span>
+              <span>{loadedAssets?.textures ?? 0} / {expectedAssets?.textures ?? 50}</span>
             </div>
             <div className="detail-row">
               <span>Star Data:</span>
-              <span>{assetsLoaded.starData} / 117,955</span>
+              <span>{loadedAssets?.starData ?? 0} / {expectedAssets?.starData ?? 117955}</span>
             </div>
             <div className="detail-row">
               <span>Shaders:</span>
-              <span>{assetsLoaded.shaders} / 8</span>
+              <span>{loadedAssets?.shaders ?? 0} / {expectedAssets?.shaders ?? 8}</span>
             </div>
           </div>
 
@@ -166,8 +162,11 @@ export function LoadingScreen({ onComplete, progress: externalProgress }: Loadin
         <button
           className="loading-skip"
           onClick={() => {
+            console.log('[LoadingScreen] Skip clicked - forcing progress to 100%');
+            // When skipping, we set progress to 1 but LoadingProvider only completes
+            // when canvasReady is true. If canvas isn't ready, we wait for it.
             setProgress(1);
-            onComplete();
+            // Don't call onComplete() here - the useEffect will handle it when progress reaches 1
           }}
           aria-label="Skip loading"
         >
@@ -205,9 +204,63 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     shaders: 0,
     total: 0,
   });
+  const [canvasReady, setCanvasReady] = useState(false);
+
+  // Expected asset counts (will be updated as components load)
+  const [expectedAssets, setExpectedAssets] = useState<LoadingAssets>({
+    textures: 50, // Planet + moon textures
+    starData: 117955, // Hipparcos catalog
+    shaders: 8, // Atmosphere, Terminator, Aurora, Ring, MilkyWay, etc.
+    total: 0,
+  });
+
+  // Calculate total expected
+  useEffect(() => {
+    const total = expectedAssets.textures + expectedAssets.shaders + 1; // starData is separate
+    setExpectedAssets(prev => ({ ...prev, total }));
+  }, [expectedAssets]);
+
+  // Auto-calculate progress from loaded assets
+  useEffect(() => {
+    if (expectedAssets.total === 0) return;
+
+    const textureProgress = Math.min(loadedAssets.textures / Math.max(expectedAssets.textures, 1), 1);
+    const starDataProgress = Math.min(loadedAssets.starData / Math.max(expectedAssets.starData, 1), 1);
+    const shaderProgress = Math.min(loadedAssets.shaders / Math.max(expectedAssets.shaders, 1), 1);
+
+    // Weighted progress: textures 40%, starData 30%, shaders 30%
+    const calculatedProgress =
+      textureProgress * 0.4 +
+      starDataProgress * 0.3 +
+      shaderProgress * 0.3;
+
+    setProgress(calculatedProgress);
+
+    console.log('[Loading] Progress:', {
+      progress: Math.round(calculatedProgress * 100) + '%',
+      textures: `${loadedAssets.textures}/${expectedAssets.textures}`,
+      starData: `${loadedAssets.starData}/${expectedAssets.starData}`,
+      shaders: `${loadedAssets.shaders}/${expectedAssets.shaders}`,
+    });
+
+    // Auto-complete when all major assets are loaded AND canvas is ready
+    if (calculatedProgress >= 0.95 && isLoading && canvasReady) {
+      console.log('[Loading] All assets loaded and canvas ready, completing...');
+      setTimeout(() => {
+        console.log('[Loading] Setting isLoading to false');
+        setIsLoading(false);
+      }, 300);
+    }
+  }, [loadedAssets, expectedAssets, isLoading, canvasReady]);
+
+  // Log when isLoading changes
+  useEffect(() => {
+    console.log('[LoadingProvider] isLoading changed:', isLoading);
+  }, [isLoading]);
 
   // Track texture loading
   const textureLoadHandler = useCallback((event: any) => {
+    console.log('[Loading] Texture loaded:', event?.target?.src || event);
     setLoadedAssets(prev => ({
       ...prev,
       textures: prev.textures + 1,
@@ -216,18 +269,39 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 
   // Track star data loading
   const starDataLoadHandler = useCallback((count: number) => {
+    console.log('[Loading] Star data loaded:', count);
     setLoadedAssets(prev => ({
       ...prev,
       starData: count,
+    }));
+    // Also update expected if we got more than expected
+    setExpectedAssets(prev => ({
+      ...prev,
+      starData: Math.max(prev.starData, count),
     }));
   }, []);
 
   // Track shader compilation
   const shaderLoadHandler = useCallback(() => {
+    console.log('[Loading] Shader compiled');
     setLoadedAssets(prev => ({
       ...prev,
       shaders: prev.shaders + 1,
     }));
+  }, []);
+
+  // Allow components to register expected asset counts
+  const registerExpectedAssets = useCallback((assets: Partial<LoadingAssets>) => {
+    setExpectedAssets(prev => ({
+      ...prev,
+      ...assets,
+    }));
+  }, []);
+
+  // Track canvas ready state
+  const canvasReadyHandler = useCallback(() => {
+    console.log('[Loading] Canvas ready');
+    setCanvasReady(true);
   }, []);
 
   // Provide loading context to children
@@ -235,19 +309,29 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     progress,
     loadedAssets,
+    expectedAssets,
     setProgress,
     setIsLoading,
     onTextureLoad: textureLoadHandler,
     onStarDataLoad: starDataLoadHandler,
     onShaderLoad: shaderLoadHandler,
+    registerExpectedAssets,
+    onCanvasReady: canvasReadyHandler,
   };
 
   return (
     <LoadingContext.Provider value={loadingContext}>
+      {/* Always render children so textures/shaders can start loading */}
+      {children}
+      {/* Show loading overlay on top while loading - only hide when canvas is ready AND assets are loaded OR user skips */}
       {isLoading && (
-        <LoadingScreen onComplete={() => setIsLoading(false)} progress={progress} />
+        <LoadingScreen
+          onComplete={() => setIsLoading(false)}
+          progress={progress}
+          loadedAssets={loadedAssets}
+          expectedAssets={expectedAssets}
+        />
       )}
-      {!isLoading && children}
     </LoadingContext.Provider>
   );
 }
@@ -259,11 +343,14 @@ interface LoadingContextValue {
   isLoading: boolean;
   progress: number;
   loadedAssets: LoadingAssets;
+  expectedAssets: LoadingAssets;
   setProgress: (progress: number) => void;
   setIsLoading: (loading: boolean) => void;
   onTextureLoad: (event: any) => void;
   onStarDataLoad: (count: number) => void;
   onShaderLoad: () => void;
+  registerExpectedAssets: (assets: Partial<LoadingAssets>) => void;
+  onCanvasReady: () => void;
 }
 
 const LoadingContext = createContext<LoadingContextValue | null>(null);

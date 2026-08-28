@@ -1,7 +1,7 @@
 import { Canvas, useThree } from '@react-three/fiber'
 import { EffectComposer, Bloom, FXAA, Vignette } from '@react-three/postprocessing'
 import { OrbitControls } from '@react-three/drei'
-import { Sun } from './Sun'
+import { Sun } from './SolarSystem/Sun'
 import { Planet } from './Planet'
 import { TimeControlUI, StarFieldControlsProvider } from './TimeControlUI'
 import { AsteroidBelt } from './AsteroidBelt'
@@ -26,6 +26,7 @@ import { useStarFieldControls } from './TimeControlUI'
 import type { PerspectiveCamera } from 'three'
 import { useSettings } from '@/context/SettingsContext'
 import { SettingsProvider } from '@/context/SettingsContext'
+import { useLoading } from '@/components/UI/LoadingScreen'
 import { useSimulationClock } from '@/hooks/useSimulationClock'
 import { useLowPerformanceMode } from '@/hooks/useLowPerformanceMode'
 
@@ -46,6 +47,15 @@ function SceneContent() {
   const { effectiveSettings } = useLowPerformanceMode();
   const { julianDate, speed: timeScale, isRunning } = useSimulationClock();
   const { camera, gl } = useThree();
+  const { onCanvasReady } = useLoading();
+
+  // Log when SceneContent renders
+  console.log('[SceneContent] Rendering with scaleMode:', scaleMode);
+
+  // Notify loading provider that canvas is ready
+  useEffect(() => {
+    onCanvasReady();
+  }, [onCanvasReady]);
 
   // Touch controls
   const { registerControls: registerTouchControls } = useTouchControls({
@@ -78,6 +88,7 @@ function SceneContent() {
         camera={{ position: [0, 20, 30], fov: 50 }}
         style={{ width: '100%', height: '100%', outline: 'none' }}
         onCreated={({ gl, camera, scene }) => {
+          console.log('[Scene] Canvas onCreated - renderer, camera, scene ready');
           gl.setClearColor(0x000000, 1)
           gl.toneMapping = THREE.ACESFilmicToneMapping
           gl.toneMappingExposure = settings.toneMappingExposure
@@ -87,6 +98,7 @@ function SceneContent() {
           registerCamera(camera);
           registerRenderer(gl);
           registerScene(scene);
+          console.log('[Scene] RenderStateContext registered');
         }}
       >
         <color attach="background" args={[0x000000]} />
@@ -116,7 +128,7 @@ function SceneContent() {
         {showSolarSystem && (
           <>
             {/* Sun at center */}
-            <Sun radius={5} />
+            <Sun onClick={() => {}} radius={5} />
 
             {/* Mercury - closest to Sun */}
             <Planet data={MERCURY} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
@@ -188,29 +200,29 @@ function SceneContent() {
           // Touch controls
           touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
         />
-      </Canvas>
 
-      {/* Post-processing for bloom effect on Sun */}
-      <EffectComposer multisampling={4} renderPriority={1}>
-        <>
-          {effectiveSettings.enableFXAA && <FXAA />}
-          {effectiveSettings.enableBloom && (
-            <Bloom
-              intensity={effectiveSettings.bloomIntensity}
-              luminanceThreshold={effectiveSettings.bloomThreshold}
-              luminanceSmoothing={effectiveSettings.bloomSmoothing}
-              mipmapBlur={true}
-            />
-          )}
-          {effectiveSettings.enableVignette && (
-            <Vignette
-              offset={0.5}
-              darkness={0.3}
-              eskil={false}
-            />
-          )}
-        </>
-      </EffectComposer>
+        {/* Post-processing for bloom effect on Sun */}
+        <EffectComposer multisampling={4} renderPriority={1}>
+          <>
+            {effectiveSettings.enableFXAA && <FXAA />}
+            {effectiveSettings.enableBloom && (
+              <Bloom
+                intensity={effectiveSettings.bloomIntensity}
+                luminanceThreshold={effectiveSettings.bloomThreshold}
+                luminanceSmoothing={effectiveSettings.bloomSmoothing}
+                mipmapBlur={true}
+              />
+            )}
+            {effectiveSettings.enableVignette && (
+              <Vignette
+                offset={0.5}
+                darkness={0.3}
+                eskil={false}
+              />
+            )}
+          </>
+        </EffectComposer>
+      </Canvas>
 
       {/* Time Control UI Overlay */}
       <TimeControlUI />

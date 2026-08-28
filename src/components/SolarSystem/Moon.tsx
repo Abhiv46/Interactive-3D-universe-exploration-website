@@ -1,9 +1,11 @@
 import { useRef, useMemo } from 'react';
-import { useFrame, useLoader, useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '../../types/orbitalElements';
 import { calculatePosition } from '../../engine/KeplerianOrbit';
 import { useLOD, MOON_LOD_CONFIG } from '../../hooks/useLOD';
+import { useLoading } from '@/components/UI/LoadingScreen';
+import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 
 interface MoonProps {
   body: CelestialBodyData;
@@ -22,10 +24,11 @@ interface MoonProps {
 export function Moon({ body, planet, julianDate, timeScale, onClick }: MoonProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
+  const { onTextureLoad } = useLoading();
 
-  // Load texture
-  const textureMap = body.visual?.textures?.diffuse ? useLoader(THREE.TextureLoader, body.visual.textures.diffuse) : null;
-  const normalMap = body.visual?.textures?.normal ? useLoader(THREE.TextureLoader, body.visual.textures.normal) : null;
+  // Load texture with progress reporting and fallback
+  const textureMap = useSafeTextureLoader(body.visual?.textures?.diffuse, body.visual?.baseColor);
+  const normalMap = useSafeTextureLoader(body.visual?.textures?.normal, body.visual?.baseColor);
 
   // Calculate position relative to planet
   const moonPosition = useMemo(() => {

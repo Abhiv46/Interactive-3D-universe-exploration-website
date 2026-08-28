@@ -1,7 +1,9 @@
 import { useRef, useMemo, useEffect } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '../../types/orbitalElements';
+import { useLoading } from '@/components/UI/LoadingScreen';
+import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 
 interface SunProps {
   onClick: (object: {
@@ -11,16 +13,18 @@ interface SunProps {
     position: THREE.Vector3;
     data: CelestialBodyData;
   }) => void;
+  radius?: number;
 }
 
-export function Sun({ onClick }: SunProps) {
+export function Sun({ onClick, radius = 5 }: SunProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const coronaRef = useRef<THREE.Mesh>(null);
   const lightRef = useRef<THREE.PointLight | null>(null);
+  const { onTextureLoad } = useLoading();
 
-  // Load sun texture
-  const texture = useLoader(THREE.TextureLoader, '/textures/sun/sun_surface.jpg');
-  const coronaTexture = useLoader(THREE.TextureLoader, '/textures/sun/corona.png');
+  // Load sun texture with progress reporting and fallback
+  const texture = useSafeTextureLoader('/textures/sun/sun_surface.jpg', '#fff5e6');
+  const coronaTexture = useSafeTextureLoader('/textures/sun/corona.png', '#ffcc00');
 
   // Sun physical data
   const sunData: CelestialBodyData = {
@@ -127,7 +131,7 @@ export function Sun({ onClick }: SunProps) {
         ref={meshRef}
         geometry={geometry}
         material={material}
-        scale={[sunData.physical.radius, sunData.physical.radius, sunData.physical.radius]}
+        scale={[radius, radius, radius]}
         onClick={handleClick}
         renderOrder={0}
       />
@@ -137,12 +141,12 @@ export function Sun({ onClick }: SunProps) {
         ref={coronaRef}
         geometry={coronaGeometry}
         material={coronaMaterial}
-        scale={[sunData.physical.radius, sunData.physical.radius, sunData.physical.radius]}
+        scale={[radius, radius, radius]}
         renderOrder={1}
       />
 
       {/* Solar wind particle field (subtle) */}
-      <SolarWindParticles radius={sunData.physical.radius} />
+      <SolarWindParticles radius={radius} />
     </group>
   );
 }

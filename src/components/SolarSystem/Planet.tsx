@@ -1,5 +1,5 @@
 import { useRef, useMemo, useEffect, useState } from 'react';
-import { useFrame, useLoader, useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '../../types/orbitalElements';
 import { calculatePosition } from '../../engine/KeplerianOrbit';
@@ -10,6 +10,8 @@ import { createAtmosphereMaterial, getAtmosphereScale, hasAtmosphereConfig } fro
 import { createTerminatorMaterial, updateTerminatorUniforms, TERMINATOR_CONFIGS } from '../../shaders/TerminatorShader';
 import { createAuroraMaterial, updateAuroraUniforms, getSimulatedSolarActivity, AURORA_CONFIGS } from '../../shaders/AuroraShader';
 import { useSettings } from '@/context/SettingsContext';
+import { useLoading } from '@/components/UI/LoadingScreen';
+import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 
 interface PlanetProps {
   body: CelestialBodyData;
@@ -36,6 +38,7 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
   const cloudsRef = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
   const { settings } = useSettings();
+  const { onTextureLoad, onShaderLoad } = useLoading();
 
   // Calculate position from orbital elements
   const position = useMemo(() => {
@@ -58,11 +61,11 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
     }
   });
 
-  // Load textures
-  const textureMap = body.visual?.textures?.diffuse ? useLoader(THREE.TextureLoader, body.visual.textures.diffuse) : null;
-  const normalMap = body.visual?.textures?.normal ? useLoader(THREE.TextureLoader, body.visual.textures.normal) : null;
-  const specularMap = body.visual?.textures?.specular ? useLoader(THREE.TextureLoader, body.visual.textures.specular) : null;
-  const cloudMap = body.visual?.textures?.clouds ? useLoader(THREE.TextureLoader, body.visual.textures.clouds) : null;
+  // Load textures with progress reporting and fallback
+  const textureMap = useSafeTextureLoader(body.visual?.textures?.diffuse, body.visual?.baseColor);
+  const normalMap = useSafeTextureLoader(body.visual?.textures?.normal, body.visual?.baseColor);
+  const specularMap = useSafeTextureLoader(body.visual?.textures?.specular, body.visual?.baseColor);
+  const cloudMap = useSafeTextureLoader(body.visual?.textures?.clouds, body.visual?.baseColor);
 
   // LOD system
   const lodState = useLOD(PLANET_LOD_CONFIG, camera.position, position, body.physical.radius);
@@ -123,7 +126,10 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
   const atmosphereMaterial = useMemo(() => {
     // Use new Fresnel shader if config exists
     if (hasAtmosphereConfig(body.id)) {
-      return createAtmosphereMaterial(body.id);
+      const material = createAtmosphereMaterial(body.id);
+      // Track shader compilation
+      if (onShaderLoad) onShaderLoad();
+      return material;
     }
     // Fallback for bodies without specific config but with hasAtmosphere flag
     if (!body.visual?.hasAtmosphere) return undefined;
@@ -150,7 +156,7 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
   const ringMaterial = useMemo(() => {
     if (!hasRings || !body.visual?.rings) return null;
 
-    const ringTexture = body.visual.rings.texture ? useLoader(THREE.TextureLoader, body.visual.rings.texture) : null;
+    const ringTexture = useSafeTextureLoader(body.visual.rings.texture, body.visual.rings.color);
 
     return new THREE.MeshBasicMaterial({
       map: ringTexture,
@@ -180,8 +186,11 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
   const hasTerminator = body.id in TERMINATOR_CONFIGS;
   const terminatorMaterial = useMemo(() => {
     if (!hasTerminator || !textureMap) return null;
-    return createTerminatorMaterial(body.id, textureMap, textureMap, null);
-  }, [body.id, textureMap, hasTerminator]);
+    const material = createTerminatorMaterial(body.id, textureMap, textureMap, null);
+    // Track shader compilation
+    if (onShaderLoad) onShaderLoad();
+    return material;
+  }, [body.id, textureMap, hasTerminator, onShaderLoad]);
 
   // Update terminator uniforms with sun position
   useFrame(() => {

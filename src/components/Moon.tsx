@@ -6,6 +6,8 @@ import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
 import { useSimulationClock } from '@/hooks/useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
+import { useLoading } from '@/components/UI/LoadingScreen';
+import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -45,9 +47,13 @@ export function Moon({
   const meshRef = useRef<THREE.Mesh>(null);
   const { julianDate } = useSimulationClock();
   const { trueScale: contextTrueScale } = useScale();
+  const { onTextureLoad } = useLoading();
 
   // Use context trueScale if not explicitly overridden
   const effectiveTrueScale = trueScale ?? contextTrueScale;
+
+  // Load texture with progress reporting and fallback
+  const textureMap = useSafeTextureLoader(data.visual?.textures?.diffuse, data.visual?.baseColor);
 
   // Calculate position relative to parent using Keplerian orbital mechanics
   const relativePosition = useKeplerianOrbit(data.orbital!, julianDate);
@@ -76,11 +82,12 @@ export function Moon({
   const material = useMemo(() => {
     const baseColor = new THREE.Color(data.visual.baseColor);
     return new THREE.MeshStandardMaterial({
+      map: textureMap,
       color: baseColor,
       roughness: 0.8,
       metalness: 0.05,
     });
-  }, [data.visual.baseColor]);
+  }, [data.visual.baseColor, textureMap]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({
