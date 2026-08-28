@@ -1,4 +1,4 @@
-import { Scene } from './components/Scene'
+import { Scene, RenderStateProvider } from './components/Scene'
 import { UIOverlay } from './components/UIOverlay'
 import { LoadingProvider } from './components/UI/LoadingScreen'
 import { initUserProperties } from './lib/analytics'
@@ -13,8 +13,10 @@ function App() {
   return (
     <I18nProvider defaultLanguage="en">
       <LoadingProvider>
-        <Scene />
-        <UIOverlay />
+        <RenderStateProvider>
+          <Scene />
+          <UIOverlay />
+        </RenderStateProvider>
       </LoadingProvider>
     </I18nProvider>
   )

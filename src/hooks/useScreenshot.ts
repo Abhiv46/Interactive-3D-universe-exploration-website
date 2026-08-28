@@ -17,15 +17,15 @@ export function useScreenshot() {
   const cameraRef = useRef<THREE.Camera | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
 
-  const setRenderer = useCallback((renderer: THREE.WebGLRenderer) => {
+  const setRenderer = useCallback((renderer: THREE.WebGLRenderer | null) => {
     rendererRef.current = renderer;
   }, []);
 
-  const setCamera = useCallback((camera: THREE.Camera) => {
+  const setCamera = useCallback((camera: THREE.Camera | null) => {
     cameraRef.current = camera;
   }, []);
 
-  const setScene = useCallback((scene: THREE.Scene) => {
+  const setScene = useCallback((scene: THREE.Scene | null) => {
     sceneRef.current = scene;
   }, []);
 

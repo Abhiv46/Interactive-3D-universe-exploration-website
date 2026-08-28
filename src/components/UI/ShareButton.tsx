@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useThree } from '@react-three/fiber';
 import { useSimulationClock } from '@/hooks/useSimulationClock';
 import { useSettings, SettingsState } from '@/context/SettingsContext';
 import { useCameraControls } from '@/hooks/useCameraControls';
@@ -9,9 +8,10 @@ import { useOGImageGenerator, useOGMetaTags } from '@/components/UI/OGImageGener
 import { useI18n } from '@/i18n/index';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import * as THREE from 'three';
+import { useRenderState } from '@/context/RenderStateContext';
 
 export function ShareButton() {
-  const { camera } = useThree();
+  const { camera } = useRenderState();
   const { julianDate, speed: timeScale, isRunning } = useSimulationClock();
   const { settings } = useSettings();
   const { getControls } = useCameraControls();
@@ -252,8 +252,6 @@ export function ShareButton() {
  * Keyboard shortcut for share (Shift+S)
  */
 export function useShareShortcut(onShare: () => void) {
-  const { gl } = useThree();
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Shift+S for share (but not when typing in input)

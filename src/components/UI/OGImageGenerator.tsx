@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { useThree } from '@react-three/fiber';
 import { useI18n } from '@/i18n/index';
+import { useRenderState } from '@/context/RenderStateContext';
 
 interface OGImageOptions {
   title?: string;
@@ -14,7 +14,7 @@ interface OGImageOptions {
  * with optional overlay text
  */
 export function useOGImageGenerator() {
-  const { gl } = useThree();
+  const { gl } = useRenderState();
   const { t } = useI18n();
   const [isGenerating, setIsGenerating] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

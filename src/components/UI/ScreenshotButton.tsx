@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useThree } from '@react-three/fiber';
 import { useScreenshot } from '@/hooks/useScreenshot';
 import { useAchievements } from '@/context/AchievementsContext';
 import { useToast } from '@/components/UI/Toast';
+import { useRenderState } from '@/context/RenderStateContext';
 
 export function ScreenshotButton() {
-  const { gl, camera, scene } = useThree();
+  const { gl, camera, scene } = useRenderState();
   const { setRenderer, setCamera, setScene, captureScreenshot } = useScreenshot();
   const { unlockAchievement } = useAchievements();
   const { showToast } = useToast();
@@ -72,8 +72,6 @@ export function ScreenshotButton() {
  * Keyboard shortcut handler for screenshot (S key)
  */
 export function useScreenshotShortcut(onScreenshot: () => void) {
-  const { gl } = useThree();
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // S key for screenshot (but not when typing in input)

@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -35,30 +33,43 @@ export function LoadingScreen({ onComplete, progress: externalProgress }: Loadin
   const [isComplete, setIsComplete] = useState(false);
   const [showUI, setShowUI] = useState(false);
 
-  // Simulate loading progress with smooth animation
-  useFrame((_state, delta) => {
+  // Simulate loading progress with smooth animation (rAF loop, safe outside Canvas)
+  const rafRef = useRef<number>();
+  const lastTimeRef = useRef<number>(performance.now());
+  useEffect(() => {
     if (isComplete) return;
 
-    // If external progress is provided, use it
-    if (externalProgress !== undefined) {
-      setProgress(externalProgress);
-      return;
-    }
+    const tick = (now: number) => {
+      const delta = Math.min((now - lastTimeRef.current) / 1000, 0.1);
+      lastTimeRef.current = now;
 
-    // Auto-progress simulation
-    const targetProgress = Math.min(progress + delta * 0.15, 1);
-    setProgress(targetProgress);
+      // If external progress is provided, use it
+      if (externalProgress !== undefined) {
+        setProgress(externalProgress);
+      } else {
+        setProgress((prev) => Math.min(prev + delta * 0.15, 1));
+      }
 
-    // Update stage based on progress
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [isComplete, externalProgress]);
+
+  // Update stage based on progress
+  useEffect(() => {
     let accumulatedWeight = 0;
     for (let i = 0; i < LOADING_STAGES.length; i++) {
       accumulatedWeight += LOADING_STAGES[i].weight;
-      if (targetProgress < accumulatedWeight) {
+      if (progress < accumulatedWeight) {
         setStage(i);
         break;
       }
     }
-  });
+  }, [progress]);
 
   // Complete when progress reaches 1
   useEffect(() => {

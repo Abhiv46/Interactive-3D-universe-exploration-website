@@ -99,7 +99,7 @@ export function useShareView() {
    */
   const generateShareUrl = useCallback((
     baseUrl: string,
-    camera: THREE.Camera,
+    camera: THREE.Camera | null,
     controls: THREE.Object3D | null, // OrbitControls target
     julianDate: number,
     timeScale: number,
@@ -108,6 +108,11 @@ export function useShareView() {
     settings: SettingsState
   ): string => {
     setIsGenerating(true);
+
+    if (!camera) {
+      console.warn('ShareView: camera not available yet');
+      return '';
+    }
 
     try {
       // Get camera position

@@ -12,6 +12,7 @@ import { ScaleProvider, useScale } from '@/context/ScaleContext'
 import { CameraControlsProvider, useCameraControls, useRegisterBodies } from '@/hooks/useCameraControls'
 import { useTouchControls } from '@/hooks/useTouchControls'
 import { GalaxyCameraProvider, useGalaxyCameraContext } from '@/hooks/useGalaxyCamera'
+import { RenderStateProvider, useRenderState } from '@/context/RenderStateContext'
 import { EclipseVisualizer } from './SolarSystem/EclipseVisualizer'
 import { ISSTracker, ISSInfoPanel } from './SolarSystem/ISSTracker'
 import {
@@ -38,6 +39,7 @@ function SceneContent() {
   const { trueScale } = useScale();
   const { registerCamera, registerControls, registerBodies } = useCameraControls();
   const registerAllBodies = useRegisterBodies();
+  const { registerRenderer, registerScene } = useRenderState();
   const { showConstellations, starMagnitudeLimit } = useStarFieldControls();
   const { scaleMode } = useGalaxyCameraContext();
   const { settings } = useSettings();
@@ -75,7 +77,7 @@ function SceneContent() {
       <Canvas
         camera={{ position: [0, 20, 30], fov: 50 }}
         style={{ width: '100%', height: '100%', outline: 'none' }}
-        onCreated={({ gl, camera }) => {
+        onCreated={({ gl, camera, scene }) => {
           gl.setClearColor(0x000000, 1)
           gl.toneMapping = THREE.ACESFilmicToneMapping
           gl.toneMappingExposure = settings.toneMappingExposure
@@ -83,6 +85,8 @@ function SceneContent() {
           // Enable logarithmic depth buffer on the renderer (type assertion for TS)
           (gl as any).logarithmicDepthBuffer = true
           registerCamera(camera);
+          registerRenderer(gl);
+          registerScene(scene);
         }}
       >
         <color attach="background" args={[0x000000]} />
@@ -229,3 +233,6 @@ export function Scene() {
     </SettingsProvider>
   );
 }
+
+// Re-export RenderStateProvider bridge so App can wrap both Scene and UIOverlay
+export { RenderStateProvider } from '@/context/RenderStateContext';
