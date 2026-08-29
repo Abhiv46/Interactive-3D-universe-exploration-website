@@ -1,7 +1,7 @@
-import { Canvas, useFrame, useThree, extend } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, extend, useMemo } from '@react-three/fiber';
 import { EffectComposer, Bloom, FXAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { useSimulationClock } from '../hooks/useSimulationClock';
+import { useJulianDate, useSimulationTime, useTimeSpeed, useSimulationPlaying, useSimulationControls } from '../hooks/useSimulationClock';
 import { useCameraController } from '../hooks/useCameraController';
 import { useAudioEngine } from '../hooks/useAudioEngine';
 import { SolarSystem } from './SolarSystem/SolarSystem';
@@ -41,7 +41,11 @@ export function getSelectedObject() {
 
 // Main Universe Scene Component
 export function UniverseScene() {
-  const clockState = useSimulationClock();
+  const julianDate = useJulianDate();
+  const date = useSimulationTime();
+  const speed = useTimeSpeed();
+  const isRunning = useSimulationPlaying();
+  const controls = useSimulationControls();
   const { state: cameraState, focusOnObject, clearFocus } = useCameraController();
   const { updateListener } = useAudioEngine();
 
@@ -50,9 +54,17 @@ export function UniverseScene() {
   // Calculate Saturn's position from orbital elements
   const saturnPosition = useMemo(() => {
     if (!SATURN.orbital) return new THREE.Vector3(0, 0, 0);
-    const pos = calculatePosition(SATURN.orbital, clockState.julianDate);
+    const pos = calculatePosition(SATURN.orbital, julianDate);
     return new THREE.Vector3(pos[0], pos[1], pos[2]);
-  }, [clockState.julianDate]);
+  }, [julianDate]);
+
+  // Create clock state object for TimeControl compatibility
+  const clockState = {
+    julianDate,
+    date: new Date(date),
+    speed,
+    isRunning,
+  };
 
   // Sun is always at origin
   const sunPosition = useMemo(() => new THREE.Vector3(0, 0, 0), []);

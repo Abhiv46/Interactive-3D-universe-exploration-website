@@ -1,4 +1,4 @@
-import { useSyncExternalStore, useCallback } from 'react';
+import { useSyncExternalStore, useCallback, useRef } from 'react';
 import {
   TimeSpeed,
   SimulationClockState,
@@ -21,7 +21,21 @@ function getGlobalClock() {
 function useClockState<T>(selector: (state: SimulationClockState) => T): T {
   const clock = getGlobalClock();
 
-  const subscribe = useCallback((callback: () => void) => clock.subscribe(callback), [clock]);
+  // useSyncExternalStore expects subscribe to accept a no-arg callback (() => void)
+  // that will be called when the store changes. clock.subscribe calls the callback
+  // IMMEDIATELY with current state, which violates the contract.
+  // Wrap to: (1) drop state argument, (2) prevent immediate call by deferring using a ref.
+  const isInitialRef = useRef(true);
+  const subscribe = useCallback((callback: () => void) => {
+    return clock.subscribe(() => {
+      if (isInitialRef.current) {
+        isInitialRef.current = false;
+        return; // Skip the immediate synchronous call
+      }
+      callback(); // Only call for actual future changes
+    });
+  }, [clock]);
+
   const getSnapshot = useCallback(() => selector(clock.getState()), [clock]);
   const getServerSnapshot = useCallback(() => selector(clock.getState()), [clock]);
 
@@ -31,9 +45,18 @@ function useClockState<T>(selector: (state: SimulationClockState) => T): T {
 // Full clock state + controls - use sparingly as it re-renders on every tick
 export function useSimulationClock(): SimulationClockState & SimulationClockControls {
   const clock = getGlobalClock();
+  const isInitialRef = useRef(true);
 
   const state = useSyncExternalStore(
-    useCallback((callback) => clock.subscribe(callback), [clock]),
+    useCallback((callback: () => void) => {
+      return clock.subscribe(() => {
+        if (isInitialRef.current) {
+          isInitialRef.current = false;
+          return;
+        }
+        callback();
+      });
+    }, [clock]),
     useCallback(() => clock.getState(), [clock]),
     useCallback(() => clock.getState(), [clock])
   );
@@ -98,5 +121,6 @@ export function useSimulationControls(): SimulationClockControls {
   };
 }
 
-// Re-export TIME_SPEEDS from the engine
+// Re-export TIME_SPEEDS and TimeSpeed type from the engine
 export { TIME_SPEEDS, TIME_SPEED_LABELS } from '../engine/SimulationClock';
+export type { TimeSpeed } from '../engine/SimulationClock';

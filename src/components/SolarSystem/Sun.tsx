@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { CelestialBodyData } from '../../types/orbitalElements';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
+import { createSunMaterial } from '@/shaders/SunShader';
 
 interface SunProps {
   onClick: (object: {
@@ -20,11 +21,19 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const coronaRef = useRef<THREE.Mesh>(null);
   const lightRef = useRef<THREE.PointLight | null>(null);
-  const { onTextureLoad } = useLoading();
+  const { onTextureLoad, onShaderLoad } = useLoading();
 
   // Load sun texture with progress reporting and fallback
   const texture = useSafeTextureLoader('/textures/sun/sun_surface.jpg', '#fff5e6');
   const coronaTexture = useSafeTextureLoader('/textures/sun/corona.png', '#ffcc00');
+
+  // Use shader material for sun surface with animated corona
+  const sunMaterial = useMemo(() => {
+    const material = createSunMaterial(texture);
+    // Track shader compilation
+    if (onShaderLoad) onShaderLoad('sun-surface');
+    return material;
+  }, [texture, onShaderLoad]);
 
   // Sun physical data
   const sunData: CelestialBodyData = {
@@ -64,15 +73,7 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
   const geometry = useMemo(() => new THREE.SphereGeometry(1, 128, 128), []);
   const coronaGeometry = useMemo(() => new THREE.SphereGeometry(1.15, 64, 64), []);
 
-  const material = useMemo(() => {
-    const mat = new THREE.MeshBasicMaterial({
-      map: texture,
-      color: 0xfff5e6,
-      transparent: false,
-      depthWrite: true,
-    });
-    return mat;
-  }, [texture]);
+  const material = sunMaterial;
 
   const coronaMaterial = useMemo(() => {
     const mat = new THREE.MeshBasicMaterial({

@@ -207,10 +207,13 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [canvasReady, setCanvasReady] = useState(false);
 
   // Expected asset counts (will be updated as components load)
+  // Each planet has 4 texture slots (diffuse, normal, specular, clouds) + 1 for rings if applicable
+  // 9 planets + 7 moons = 16 bodies * 4 = 64 + sun(2) + saturn rings(1) = ~67
+  // We'll use a realistic number that accounts for all texture slots
   const [expectedAssets, setExpectedAssets] = useState<LoadingAssets>({
-    textures: 50, // Planet + moon textures
+    textures: 70, // Planet + moon + sun texture slots (diffuse, normal, specular, clouds, rings)
     starData: 117955, // Hipparcos catalog
-    shaders: 8, // Atmosphere, Terminator, Aurora, Ring, MilkyWay, etc.
+    shaders: 12, // Atmosphere(9), Terminator(3), Aurora(1), MilkyWay(1), etc.
     total: 0,
   });
 
@@ -281,13 +284,17 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  // Track shader compilation
-  const shaderLoadHandler = useCallback(() => {
-    console.log('[Loading] Shader compiled');
-    setLoadedAssets(prev => ({
-      ...prev,
-      shaders: prev.shaders + 1,
-    }));
+  // Track shader compilation (deduplicated)
+  const shaderLoadedRef = useRef<Set<string>>(new Set());
+  const shaderLoadHandler = useCallback((shaderName: string = 'default') => {
+    if (!shaderLoadedRef.current.has(shaderName)) {
+      shaderLoadedRef.current.add(shaderName);
+      console.log('[Loading] Shader compiled:', shaderName);
+      setLoadedAssets(prev => ({
+        ...prev,
+        shaders: prev.shaders + 1,
+      }));
+    }
   }, []);
 
   // Allow components to register expected asset counts
@@ -360,7 +367,7 @@ interface LoadingContextValue {
   setIsLoading: (loading: boolean) => void;
   onTextureLoad: (event: any) => void;
   onStarDataLoad: (count: number) => void;
-  onShaderLoad: () => void;
+  onShaderLoad: (shaderName?: string) => void;
   registerExpectedAssets: (assets: Partial<LoadingAssets>) => void;
   onCanvasReady: () => void;
 }

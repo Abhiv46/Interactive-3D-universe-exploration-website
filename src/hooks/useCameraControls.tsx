@@ -1,7 +1,7 @@
 import { createContext, useContext, useRef, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 import { CelestialBodyData, OrbitalElements } from '@/types/orbitalElements';
-import { useJulianDate, useSimulationClock } from './useSimulationClock';
+import { useJulianDate } from './useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
 import { fastPosition, precomputeOrbit, PrecomputedOrbit } from '@/engine/KeplerianOrbit';
 

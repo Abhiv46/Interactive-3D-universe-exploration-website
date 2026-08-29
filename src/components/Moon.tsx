@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
-import { useSimulationClock } from '@/hooks/useSimulationClock';
+import { useJulianDate } from '@/hooks/useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
 import { useLoading } from '@/components/UI/LoadingScreen';
@@ -45,7 +45,7 @@ export function Moon({
   onClick,
 }: MoonProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const { julianDate } = useSimulationClock();
+  const julianDate = useJulianDate();
   const { trueScale: contextTrueScale } = useScale();
   const { onTextureLoad } = useLoading();
 

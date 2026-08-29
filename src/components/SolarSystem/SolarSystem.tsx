@@ -1,4 +1,4 @@
-import { useSimulationClock } from '../../hooks/useSimulationClock';
+import { useTimeSpeed } from '../../hooks/useSimulationClock';
 import { Sun } from './Sun';
 import { Planet } from './Planet';
 import { Moon } from './Moon';
@@ -23,7 +23,7 @@ interface SolarSystemProps {
 }
 
 export function SolarSystem({ julianDate, onObjectClick }: SolarSystemProps) {
-  const { speed: timeSpeed } = useSimulationClock();
+  const timeSpeed = useTimeSpeed();
   const timeScale = timeSpeed;
 
   return (

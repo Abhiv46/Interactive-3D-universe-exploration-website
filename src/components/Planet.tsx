@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
-import { useSimulationClock } from '@/hooks/useSimulationClock';
+import { useJulianDate } from '@/hooks/useSimulationClock';
 import { Moon } from './Moon';
 import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
@@ -57,7 +57,7 @@ export function Planet({
   const effectiveTrueScale = trueScale ?? contextTrueScale;
 
   // Get simulation time from clock
-  const { julianDate } = useSimulationClock();
+  const julianDate = useJulianDate();
 
   // Calculate position using Keplerian orbital mechanics
   const position = useKeplerianOrbit(data.orbital!, julianDate);

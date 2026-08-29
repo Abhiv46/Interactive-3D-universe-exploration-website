@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { EARTH } from '@/data/planets';
 import { useKeplerianOrbit } from '@/hooks/useKeplerianOrbit';
-import { useSimulationClock } from '@/hooks/useSimulationClock';
+import { useJulianDate } from '@/hooks/useSimulationClock';
 import { generateOrbitPath } from '@/engine/KeplerianOrbit';
 
 // Use Line from three to avoid SVG <line> conflict
@@ -20,7 +20,7 @@ export function Earth({ scale = 1, showOrbit = true }: EarthProps) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   // Get simulation time from clock
-  const { julianDate } = useSimulationClock();
+  const julianDate = useJulianDate();
 
   // Calculate position using Keplerian orbital mechanics
   const position = useKeplerianOrbit(EARTH.orbital!, julianDate);

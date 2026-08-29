@@ -10,6 +10,7 @@ import {
 } from '@/data/galaxies';
 import { useScale } from '@/context/ScaleContext';
 import { useCameraControls } from '@/hooks/useCameraControls';
+import { useLoading } from '@/components/UI/LoadingScreen';
 
 interface MilkyWayProps {
   /** Whether the galaxy is visible (controlled by camera distance) */
@@ -28,6 +29,7 @@ export function MilkyWay({ visible = true, opacity = 1, quality = 'high' }: Milk
   const { scene } = useThree();
   const { trueScale } = useScale();
   const { cameraPosition } = useCameraControls();
+  const { onShaderLoad } = useLoading();
   const galaxyRef = useRef<THREE.Group | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const bulgeRef = useRef<THREE.Points | null>(null);
@@ -186,7 +188,7 @@ export function MilkyWay({ visible = true, opacity = 1, quality = 'high' }: Milk
 
   // Custom shader material for spiral arms with twinkling
   const armMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
+    const material = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uOpacity: { value: opacity },
@@ -245,6 +247,7 @@ export function MilkyWay({ visible = true, opacity = 1, quality = 'high' }: Milk
       blending: THREE.AdditiveBlending,
       vertexColors: true,
     });
+    return material;
   }, [opacity]);
 
   // Bulge material (no twinkling, softer)

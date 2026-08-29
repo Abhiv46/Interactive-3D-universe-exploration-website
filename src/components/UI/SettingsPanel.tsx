@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSimulationClock } from '../../hooks/useSimulationClock';
+import { useTimeSpeed, useSimulationControls, TimeSpeed } from '../../hooks/useSimulationClock';
 import { useAudioEngine } from '../../hooks/useAudioEngine';
-import { TimeSpeed } from '../../engine/SimulationClock';
 import { useSettings } from '@/context/SettingsContext';
 import { useFocusTrap, generateId } from '@/hooks/useAccessibility';
 import { trackEvent, ANALYTICS_EVENTS, trackSettingsChange } from '@/lib/analytics';
@@ -9,8 +8,8 @@ import { trackEvent, ANALYTICS_EVENTS, trackSettingsChange } from '@/lib/analyti
 export function SettingsPanel() {
   const { settings, setSettings, resetToDefaults } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
-  const clockState = useSimulationClock();
-  const clockControls = clockState;
+  const timeSpeed = useTimeSpeed();  // Returns primitive - stable reference
+  const clockControls = useSimulationControls();  // Returns stable controls object
   const { state: audioState, toggleAudio, setMasterGain } = useAudioEngine();
 
   // Focus trap for accessibility
@@ -35,8 +34,8 @@ export function SettingsPanel() {
 
   // Sync time speed with simulation clock
   useEffect(() => {
-    setSettings({ timeSpeed: clockState.speed });
-  }, [clockState.speed, setSettings]);
+    setSettings({ timeSpeed });
+  }, [timeSpeed, setSettings]);
 
   const handleTimeSpeedChange = (speed: number) => {
     clockControls.setSpeed(speed as TimeSpeed);

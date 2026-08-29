@@ -128,7 +128,7 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
     if (hasAtmosphereConfig(body.id)) {
       const material = createAtmosphereMaterial(body.id);
       // Track shader compilation
-      if (onShaderLoad) onShaderLoad();
+      if (onShaderLoad) onShaderLoad(`atmosphere-${body.id}`);
       return material;
     }
     // Fallback for bodies without specific config but with hasAtmosphere flag
@@ -188,7 +188,7 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
     if (!hasTerminator || !textureMap) return null;
     const material = createTerminatorMaterial(body.id, textureMap, textureMap, null);
     // Track shader compilation
-    if (onShaderLoad) onShaderLoad();
+    if (onShaderLoad) onShaderLoad(`terminator-${body.id}`);
     return material;
   }, [body.id, textureMap, hasTerminator, onShaderLoad]);
 
@@ -217,12 +217,15 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
 
     // North pole aurora
     const northMaterial = createAuroraMaterial(body.id, 'north', 0);
+    // Track shader compilation
+    if (onShaderLoad) onShaderLoad(`aurora-${body.id}-north`);
     const northMesh = new THREE.Mesh(geometry, northMaterial);
     northMesh.renderOrder = 15;
     auroraNorthRef.current = northMesh;
 
     // South pole aurora
     const southMaterial = createAuroraMaterial(body.id, 'south', 0);
+    if (onShaderLoad) onShaderLoad(`aurora-${body.id}-south`);
     const southMesh = new THREE.Mesh(geometry, southMaterial);
     southMesh.renderOrder = 15;
     auroraSouthRef.current = southMesh;
@@ -235,7 +238,7 @@ export function Planet({ body, julianDate, timeScale, onClick, visualScale = 1, 
       auroraSouthRef.current = null;
       auroraGeometryRef.current = null;
     };
-  }, [hasAurora, body.id, settings.showAurora]);
+  }, [hasAurora, body.id, settings.showAurora, onShaderLoad]);
 
   // Update aurora animation
   useFrame((_, delta) => {

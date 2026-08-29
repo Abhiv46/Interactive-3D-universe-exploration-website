@@ -1,4 +1,4 @@
-import { useSimulationClock } from '../../hooks/useSimulationClock';
+import { useJulianDate, useSimulationTime, useTimeSpeed, useSimulationPlaying } from '../../hooks/useSimulationClock';
 import { useCameraController } from '../../hooks/useCameraController';
 import * as THREE from 'three';
 
@@ -13,7 +13,10 @@ export function HUD({
   targetPosition: THREE.Vector3 | null;
   distance: number | null;
 }) {
-  const clockState = useSimulationClock();
+  const julianDate = useJulianDate();
+  const date = useSimulationTime();
+  const speed = useTimeSpeed();
+  const isRunning = useSimulationPlaying();
   const cameraState = useCameraController();
 
   const formatDistance = (meters: number) => {
@@ -46,16 +49,16 @@ export function HUD({
       <div className="hud-section hud-time">
         <div className="hud-row">
           <span className="hud-label">SIM TIME</span>
-          <span className="hud-value">{clockState.date.toISOString().replace('T', ' ').substring(0, 19)} UTC</span>
+          <span className="hud-value">{new Date(date).toISOString().replace('T', ' ').substring(0, 19)} UTC</span>
         </div>
         <div className="hud-row">
           <span className="hud-label">JULIAN DATE</span>
-          <span className="hud-value">JD {clockState.julianDate.toFixed(5)}</span>
+          <span className="hud-value">JD {julianDate.toFixed(5)}</span>
         </div>
         <div className="hud-row">
           <span className="hud-label">SPEED</span>
-          <span className={`hud-value hud-speed ${clockState.isRunning ? 'playing' : 'paused'}`}>
-            {formatSpeed(clockState.speed)}
+          <span className={`hud-value hud-speed ${isRunning ? 'playing' : 'paused'}`}>
+            {formatSpeed(speed)}
           </span>
         </div>
       </div>

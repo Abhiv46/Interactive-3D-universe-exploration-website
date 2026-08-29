@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
-import { useSimulationClock } from './useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
 import type { PerspectiveCamera } from 'three';
 

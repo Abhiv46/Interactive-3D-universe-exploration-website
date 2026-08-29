@@ -98,10 +98,9 @@ function SceneContent() {
         <color attach="background" args={[0x000000]} />
         <ambientLight intensity={0.1} />
         <pointLight position={[0, 0, 0]} intensity={2} color="#fff5e6" distance={0} decay={2} />
-
-        {/* Time Control UI Overlay */}
-        <TimeControlUI />
       </Canvas>
+      {/* Time Control UI Overlay - MUST be outside Canvas (renders HTML, not Three.js objects) */}
+      <TimeControlUI />
     </>
   );
 }
