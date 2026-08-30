@@ -14,26 +14,42 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-XXXXXXXXXX',
 };
 
-// Initialize Firebase app (singleton)
-let app: FirebaseApp;
-let db: Firestore;
+// Initialize Firebase app (singleton) - wrapped in try-catch to fail silently
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
 let analytics: Analytics | null = null;
 
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
+try {
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
+
+  if (app) {
+    db = getFirestore(app);
+  }
+} catch (error) {
+  console.warn('[Firebase] Initialization failed, continuing without Firebase:', error);
+  app = null;
+  db = null;
 }
 
-db = getFirestore(app);
-
 // Initialize Analytics only in browser and if supported
-if (typeof window !== 'undefined') {
-  isSupported().then((supported) => {
-    if (supported) {
-      analytics = getAnalytics(app);
-    }
-  });
+if (typeof window !== 'undefined' && app) {
+  isSupported()
+    .then((supported) => {
+      if (supported && app) {
+        try {
+          analytics = getAnalytics(app);
+        } catch (error) {
+          console.warn('[Firebase] Analytics initialization failed:', error);
+        }
+      }
+    })
+    .catch((error) => {
+      console.warn('[Firebase] isSupported() check failed:', error);
+    });
 }
 
 export { app, db, analytics };

@@ -3,6 +3,7 @@ import {
   addDoc,
   serverTimestamp,
   type DocumentReference,
+  type Firestore,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { FeedbackData, BugReportData } from './firebase';
@@ -71,6 +72,10 @@ function getAppContext(): FeedbackData['currentView'] {
 export async function submitFeedback(
   data: Omit<FeedbackData, 'id' | 'timestamp' | 'userAgent' | 'viewport' | 'url'>
 ): Promise<DocumentReference> {
+  if (!db) {
+    throw new Error('Firestore not initialized');
+  }
+
   const deviceInfo = captureDeviceInfo();
 
   const feedbackData: FeedbackData = {
@@ -83,7 +88,7 @@ export async function submitFeedback(
     currentView: getAppContext(),
   };
 
-  const docRef = await addDoc(collection(db, 'feedback'), {
+  const docRef = await addDoc(collection(db as Firestore, 'feedback'), {
     ...feedbackData,
     timestamp: serverTimestamp(),
   });
@@ -97,6 +102,10 @@ export async function submitFeedback(
 export async function submitBugReport(
   data: Omit<BugReportData, 'id' | 'timestamp' | 'userAgent' | 'viewport' | 'url' | 'consoleErrors' | 'networkErrors'>
 ): Promise<DocumentReference> {
+  if (!db) {
+    throw new Error('Firestore not initialized');
+  }
+
   const deviceInfo = captureDeviceInfo();
 
   const bugData: BugReportData = {
@@ -111,7 +120,7 @@ export async function submitBugReport(
     currentView: getAppContext(),
   };
 
-  const docRef = await addDoc(collection(db, 'bugReports'), {
+  const docRef = await addDoc(collection(db as Firestore, 'bugReports'), {
     ...bugData,
     timestamp: serverTimestamp(),
   });
