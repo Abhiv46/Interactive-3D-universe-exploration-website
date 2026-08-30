@@ -69,7 +69,7 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
     metadata: {},
   };
 
-  // Geometry and materials
+  // Geometry and materials - use high segments for smooth sphere
   const geometry = useMemo(() => new THREE.SphereGeometry(1, 128, 128), []);
   const coronaGeometry = useMemo(() => new THREE.SphereGeometry(1.15, 64, 64), []);
 
@@ -107,8 +107,11 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
     };
   }, []);
 
-  // Corona rotation animation
-  useFrame((_state, delta) => {
+  // Sun surface and corona animation
+  useFrame((state, delta) => {
+    if (sunMaterial && sunMaterial.uniforms && sunMaterial.uniforms.uTime) {
+      sunMaterial.uniforms.uTime.value = state.clock.getElapsedTime();
+    }
     if (coronaRef.current) {
       coronaRef.current.rotation.y += delta * 0.0001;
       coronaRef.current.rotation.x += delta * 0.00005;
@@ -137,6 +140,7 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
         scale={[radius, radius, radius]}
         onClick={handleClick}
         renderOrder={0}
+        name="sun"
       />
 
       {/* Corona */}

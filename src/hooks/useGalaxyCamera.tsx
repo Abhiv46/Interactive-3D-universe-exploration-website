@@ -11,15 +11,15 @@ export type CameraScaleMode = 'solar-system' | 'interstellar' | 'galactic' | 'in
 
 /**
  * Scale boundaries (in Three.js units)
- * Solar system: ~0 - 500 (Neptune orbit ~30 AU * 2000 = 60,000 visual, but camera max is 500)
- * Interstellar: 500 - 50,000 (nearby stars)
- * Galactic: 50,000 - 5,000,000 (Milky Way)
- * Intergalactic: 5,000,000+ (other galaxies)
+ * Solar system (visual scale): 0 - 100,000 (Neptune orbit ~30 AU * 2000 = 60,000 visual)
+ * Interstellar: 100,000 - 5,000,000 (nearby stars)
+ * Galactic: 5,000,000 - 500,000,000 (Milky Way)
+ * Intergalactic: 500,000,000+ (other galaxies)
  */
 export const SCALE_BOUNDARIES = {
-  solarSystemMax: 500,
-  interstellarMax: 50000,
-  galacticMax: 5000000,
+  solarSystemMax: 100000,
+  interstellarMax: 5000000,
+  galacticMax: 500000000,
 };
 
 /**
@@ -53,17 +53,17 @@ export function useGalaxyCamera() {
   const scaleConfigs = {
     'solar-system': {
       minDistance: trueScale ? 0.1 : 5,
-      maxDistance: trueScale ? 5e11 : 500,
+      maxDistance: trueScale ? 5e11 : 100000,
       near: trueScale ? 0.01 : 0.1,
-      far: trueScale ? 1e13 : 10000,
+      far: trueScale ? 1e13 : 200000,
       fov: 50,
       description: 'Solar System',
     },
     'interstellar': {
-      minDistance: 500,
-      maxDistance: 50000,
-      near: 100,
-      far: 100000,
+      minDistance: 100000,
+      maxDistance: 5000000,
+      near: 10000,
+      far: 1e7,
       fov: 60,
       description: 'Local Stars',
     },

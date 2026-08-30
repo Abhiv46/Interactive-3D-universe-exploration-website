@@ -73,7 +73,7 @@ function SceneContent() {
     <>
       {/* Main 3D Scene Canvas */}
       <Canvas
-        camera={{ position: [0, 500, 1500], fov: 50 }}
+        camera={{ position: [0, 3000, 8000], fov: 50 }}
         style={{ width: '100%', height: '100%', outline: 'none' }}
         onCreated={({ gl, camera, scene }) => {
           console.log('[Scene] Canvas onCreated - renderer, camera, scene ready');
@@ -140,7 +140,7 @@ function SceneInner({
   const { registerCamera, registerBodies } = useCameraControls();
   const registerAllBodies = useRegisterBodies();
   const { registerRenderer, registerScene } = useRenderState();
-  const { scaleMode } = useGalaxyCameraContext();
+  const { scaleMode, cameraDistance } = useGalaxyCameraContext();
 
   // Determine visibility based on scale mode
   const showSolarSystem = scaleMode === 'solar-system';
