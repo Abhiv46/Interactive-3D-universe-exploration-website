@@ -210,6 +210,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   // Only diffuse textures are loaded per body (see Planet.tsx and Moon.tsx)
   // Sun + 8 planets + Moon + 4 Galilean moons + Titan + Enceladus = 17 bodies
   // Star catalog: BRIGHT_STARS (~80) + generated 20,000 = ~20,080 total
+  // Full Hipparcos catalog is 117,955 but we only load a subset for performance
   // Shaders used by Scene.tsx: Planet(8) + Moon(7) + Sun(2) + MilkyWay(1) + Rings(8: 7 Saturn + 1 Uranus) = 26
   const [expectedAssets, setExpectedAssets] = useState<LoadingAssets>({
     textures: 17, // One diffuse texture per celestial body
@@ -256,6 +257,19 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
       }, 300);
     }
   }, [loadedAssets, expectedAssets, isLoading, canvasReady]);
+
+  // Timeout fallback: force complete loading after 30 seconds max
+  useEffect(() => {
+    if (!isLoading) return;
+    const timeout = setTimeout(() => {
+      console.log('[Loading] Timeout reached (30s), forcing completion...');
+      setProgress(1);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 300);
+    }, 30000); // 30 second max loading time
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
 
   // Log when isLoading changes
   useEffect(() => {
