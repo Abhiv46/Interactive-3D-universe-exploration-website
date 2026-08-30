@@ -73,7 +73,7 @@ function SceneContent() {
     <>
       {/* Main 3D Scene Canvas */}
       <Canvas
-        camera={{ position: [0, 20, 30], fov: 50 }}
+        camera={{ position: [0, 500, 1500], fov: 50 }}
         style={{ width: '100%', height: '100%', outline: 'none' }}
         onCreated={({ gl, camera, scene }) => {
           console.log('[Scene] Canvas onCreated - renderer, camera, scene ready');

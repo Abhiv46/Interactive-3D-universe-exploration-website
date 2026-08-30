@@ -50,7 +50,7 @@ const { chromium } = require('playwright');
 
   try {
     console.log('Navigating to preview...');
-    await page.goto('http://localhost:4177', { waitUntil: 'networkidle', timeout: 120000 });
+    await page.goto('http://localhost:4178', { waitUntil: 'networkidle', timeout: 120000 });
 
     console.log('Page loaded, waiting for initial render...');
     await page.waitForTimeout(3000);
