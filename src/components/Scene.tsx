@@ -196,10 +196,20 @@ function SceneInner({
           <Sun onClick={() => {}} radius={5} />
 
           {/* Mercury - closest to Sun */}
-          <Planet data={MERCURY} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+          <Planet
+            data={MERCURY}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+          />
 
           {/* Venus */}
-          <Planet data={VENUS} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+          <Planet
+            data={VENUS}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+          />
 
           {/* Earth orbiting Sun with real Keplerian mechanics + Moon */}
           <Planet
@@ -215,7 +225,12 @@ function SceneInner({
           <ISSTracker earthBody={EARTH} enabled={effectiveSettings.showISS} julianDate={julianDate} timeScale={timeScale} />
 
           {/* Mars */}
-          <Planet data={MARS} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+          <Planet
+            data={MARS}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+          />
 
           {/* Jupiter with Galilean moons */}
           <Planet
@@ -238,10 +253,20 @@ function SceneInner({
           />
 
           {/* Uranus with rings */}
-          <Planet data={URANUS} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+          <Planet
+            data={URANUS}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+          />
 
           {/* Neptune with rings */}
-          <Planet data={NEPTUNE} visualScale={2000} trueScale={trueScale} showOrbit={effectiveSettings.showOrbits} />
+          <Planet
+            data={NEPTUNE}
+            visualScale={2000}
+            trueScale={trueScale}
+            showOrbit={effectiveSettings.showOrbits}
+          />
 
           {/* Asteroid Belt between Mars and Jupiter */}
           {effectiveSettings.showAsteroidBelt && <AsteroidBelt />}
