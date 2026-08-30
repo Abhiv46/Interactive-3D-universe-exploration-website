@@ -286,7 +286,7 @@ function SceneInner({
         enableDamping={true}
         dampingFactor={0.05}
         minDistance={5}
-        maxDistance={500}
+        maxDistance={100000}
         // Touch controls
         touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
       />

@@ -79,6 +79,13 @@ export function Planet({
     ? physicalOrbitPath
     : physicalOrbitPath.map(p => [p[0] * AU_TO_VISUAL, p[1] * AU_TO_VISUAL, p[2] * AU_TO_VISUAL] as [number, number, number]);
 
+  // Debug log: verify position and radius are reasonable
+  useEffect(() => {
+    const posVec = new THREE.Vector3(position[0], position[1], position[2]);
+    const distanceFromSun = posVec.length();
+    console.log(`[Planet ${data.name}] position: [${position[0].toFixed(1)}, ${position[1].toFixed(1)}, ${position[2].toFixed(1)}], distance from Sun: ${distanceFromSun.toFixed(1)}, displayRadius: ${(data.physical.radius * visualScale).toFixed(1)}, visualScale: ${visualScale}, trueScale: ${effectiveTrueScale}`);
+  }, [position, data.name, data.physical.radius, visualScale, effectiveTrueScale]);
+
   // Create orbit line geometry
   const orbitGeometry = useMemo(() => {
     if (!orbitPath || orbitPath.length === 0 || !showOrbit) return null;

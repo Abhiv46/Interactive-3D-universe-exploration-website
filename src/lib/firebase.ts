@@ -29,8 +29,8 @@ try {
   if (app) {
     db = getFirestore(app);
   }
-} catch (error) {
-  console.warn('[Firebase] Initialization failed, continuing without Firebase:', error);
+} catch {
+  // Fail silently without logging - demo config expected to fail
   app = null;
   db = null;
 }
@@ -42,13 +42,13 @@ if (typeof window !== 'undefined' && app) {
       if (supported && app) {
         try {
           analytics = getAnalytics(app);
-        } catch (error) {
-          console.warn('[Firebase] Analytics initialization failed:', error);
+        } catch {
+          // Fail silently
         }
       }
     })
-    .catch((error) => {
-      console.warn('[Firebase] isSupported() check failed:', error);
+    .catch(() => {
+      // Fail silently
     });
 }
 

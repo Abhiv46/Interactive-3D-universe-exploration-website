@@ -96,8 +96,8 @@ export function APODPanel() {
       setData(apodData);
       saveToCache(apodData);
       setRateLimited(false);
-    } catch (err) {
-      console.error('Failed to fetch APOD:', err);
+    } catch {
+      // Fail silently - error state handled via cached data or error UI
       if (!cached) {
         setError(t('apod.error'));
       }
