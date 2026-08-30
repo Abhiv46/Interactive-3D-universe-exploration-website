@@ -47,7 +47,7 @@ export function Moon({
   const meshRef = useRef<THREE.Mesh>(null);
   const julianDate = useJulianDate();
   const { trueScale: contextTrueScale } = useScale();
-  const { onTextureLoad } = useLoading();
+  const { onTextureLoad, onShaderLoad } = useLoading();
 
   // Use context trueScale if not explicitly overridden
   const effectiveTrueScale = trueScale ?? contextTrueScale;
@@ -55,11 +55,24 @@ export function Moon({
   // Load texture with progress reporting and fallback
   const textureMap = useSafeTextureLoader(data.visual?.textures?.diffuse, data.visual?.baseColor);
 
-  // Calculate position relative to parent using Keplerian orbital mechanics
-  const relativePosition = useKeplerianOrbit(data.orbital!, julianDate);
+  // Calculate position relative to parent using Keplerian orbital mechanics (returns physical meters)
+  // Convert to visual coordinate system: 1 AU = 2000 visual units (matches camera system)
+  const AU_TO_VISUAL = 2000 / 149597870700;
+  const physicalRelativePosition = useKeplerianOrbit(data.orbital!, julianDate);
 
-  // Generate orbit path points for visualization (relative to parent)
-  const orbitPath = useOrbitPath(data.orbital!, 180); // Fewer points for moons
+  // Convert physical position (meters) to visual units
+  // In trueScale mode, use actual meters. In visual mode, convert AU to visual units.
+  const relativePosition = effectiveTrueScale
+    ? physicalRelativePosition
+    : physicalRelativePosition.map(p => p * AU_TO_VISUAL) as [number, number, number];
+
+  // Generate orbit path points for visualization (relative to parent) - returns physical meters
+  const physicalOrbitPath = useOrbitPath(data.orbital!, 180); // Fewer points for moons
+
+  // Apply same conversion to orbit path
+  const orbitPath = effectiveTrueScale
+    ? physicalOrbitPath
+    : physicalOrbitPath.map(p => [p[0] * AU_TO_VISUAL, p[1] * AU_TO_VISUAL, p[2] * AU_TO_VISUAL] as [number, number, number]);
 
   // Create orbit line geometry (relative to parent)
   const orbitGeometry = useMemo(() => {
@@ -81,13 +94,16 @@ export function Moon({
   // Create material
   const material = useMemo(() => {
     const baseColor = new THREE.Color(data.visual.baseColor);
-    return new THREE.MeshStandardMaterial({
+    const mat = new THREE.MeshStandardMaterial({
       map: textureMap,
       color: baseColor,
       roughness: 0.8,
       metalness: 0.05,
     });
-  }, [data.visual.baseColor, textureMap]);
+    // Track shader compilation
+    if (onShaderLoad) onShaderLoad(`moon-${data.id}`);
+    return mat;
+  }, [data.visual.baseColor, textureMap, onShaderLoad]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({
@@ -145,6 +161,7 @@ export function Moon({
         castShadow
         receiveShadow
         onClick={(e) => { e.stopPropagation(); handleMoonClick(); }}
+        name={data.id}
       />
     </group>
   );

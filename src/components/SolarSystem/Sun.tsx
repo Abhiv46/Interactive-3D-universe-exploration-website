@@ -85,8 +85,10 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
       side: THREE.BackSide,
       blending: THREE.AdditiveBlending,
     });
+    // Track shader compilation
+    if (onShaderLoad) onShaderLoad('sun-corona');
     return mat;
-  }, [coronaTexture]);
+  }, [coronaTexture, onShaderLoad]);
 
   // Point light for solar illumination
   useEffect(() => {

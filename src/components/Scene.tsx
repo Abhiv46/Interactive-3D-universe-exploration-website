@@ -51,6 +51,13 @@ function SceneContent() {
   // Log when SceneContent renders
   console.log('[SceneContent] Rendering (outside Canvas)');
 
+  // Expose julianDate for debugging
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__julianDate__ = julianDate;
+    }
+  }, [julianDate]);
+
   // Notify loading provider that canvas is ready
   useEffect(() => {
     onCanvasReady();
@@ -79,6 +86,10 @@ function SceneContent() {
           registerCamera(camera);
           registerRenderer(gl);
           registerScene(scene);
+          // Expose to window for testing/debugging
+          if (typeof window !== 'undefined') {
+            window.__THREE__ = { scene, camera, gl, THREE };
+          }
           console.log('[Scene] RenderStateContext registered');
         }}
       >

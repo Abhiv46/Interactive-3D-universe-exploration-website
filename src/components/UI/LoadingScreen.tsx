@@ -207,13 +207,14 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [canvasReady, setCanvasReady] = useState(false);
 
   // Expected asset counts (will be updated as components load)
-  // Each planet has 4 texture slots (diffuse, normal, specular, clouds) + 1 for rings if applicable
-  // 9 planets + 7 moons = 16 bodies * 4 = 64 + sun(2) + saturn rings(1) = ~67
-  // We'll use a realistic number that accounts for all texture slots
+  // Only diffuse textures are loaded per body (see Planet.tsx and Moon.tsx)
+  // Sun + 8 planets + Moon + 4 Galilean moons + Titan + Enceladus = 17 bodies
+  // Star catalog: BRIGHT_STARS (~80) + generated 20,000 = ~20,080 total
+  // Shaders used by Scene.tsx: Planet(8) + Moon(7) + Sun(2) + MilkyWay(1) + Rings(8: 7 Saturn + 1 Uranus) = 26
   const [expectedAssets, setExpectedAssets] = useState<LoadingAssets>({
-    textures: 70, // Planet + moon + sun texture slots (diffuse, normal, specular, clouds, rings)
-    starData: 117955, // Hipparcos catalog
-    shaders: 12, // Atmosphere(9), Terminator(3), Aurora(1), MilkyWay(1), etc.
+    textures: 17, // One diffuse texture per celestial body
+    starData: 20080, // BRIGHT_STARS + generatedAdditionalStars(20000) from stars.ts
+    shaders: 26, // Planet(8) + Moon(7) + Sun(2) + MilkyWay(1) + Rings(8) = 26
     total: 0,
   });
 

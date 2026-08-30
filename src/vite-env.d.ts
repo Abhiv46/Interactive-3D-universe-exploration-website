@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="three" />
 
 interface ImportMetaEnv {
   readonly VITE_FIREBASE_API_KEY: string;
@@ -12,4 +13,15 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+interface Window {
+  __THREE__?: {
+    scene: THREE.Scene;
+    camera: THREE.Camera;
+    gl: THREE.WebGLRenderer;
+    THREE: any;
+  };
+  __galaxyCamera?: any;
+  __julianDate__?: number;
 }

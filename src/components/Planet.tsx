@@ -51,7 +51,7 @@ export function Planet({
   const meshRef = useRef<THREE.Mesh>(null);
   const ringRefs = useRef<THREE.Mesh[]>([]);
   const { trueScale: contextTrueScale } = useScale();
-  const { onTextureLoad } = useLoading();
+  const { onTextureLoad, onShaderLoad } = useLoading();
 
   // Use context trueScale if not explicitly overridden
   const effectiveTrueScale = trueScale ?? contextTrueScale;
@@ -59,11 +59,25 @@ export function Planet({
   // Get simulation time from clock
   const julianDate = useJulianDate();
 
-  // Calculate position using Keplerian orbital mechanics
-  const position = useKeplerianOrbit(data.orbital!, julianDate);
+  // Calculate position using Keplerian orbital mechanics (returns physical meters)
+  // Convert to visual coordinate system: 1 AU = 2000 visual units (matches camera system)
+  // The AU constant is 149597870700 meters, so visual scale factor = 2000 / AU
+  const AU_TO_VISUAL = 2000 / 149597870700;
+  const physicalPosition = useKeplerianOrbit(data.orbital!, julianDate);
 
-  // Generate orbit path points for visualization
-  const orbitPath = useOrbitPath(data.orbital!, 360);
+  // Convert physical position (meters) to visual units
+  // In trueScale mode, use actual meters. In visual mode, convert AU to visual units.
+  const position = effectiveTrueScale
+    ? physicalPosition
+    : physicalPosition.map(p => p * AU_TO_VISUAL) as [number, number, number];
+
+  // Generate orbit path points for visualization (returns physical meters)
+  const physicalOrbitPath = useOrbitPath(data.orbital!, 360);
+
+  // Apply same conversion to orbit path
+  const orbitPath = effectiveTrueScale
+    ? physicalOrbitPath
+    : physicalOrbitPath.map(p => [p[0] * AU_TO_VISUAL, p[1] * AU_TO_VISUAL, p[2] * AU_TO_VISUAL] as [number, number, number]);
 
   // Create orbit line geometry
   const orbitGeometry = useMemo(() => {
@@ -94,13 +108,16 @@ export function Planet({
   // Create material with planet's base color
   const material = useMemo(() => {
     const baseColor = new THREE.Color(data.visual.baseColor);
-    return new THREE.MeshStandardMaterial({
+    const mat = new THREE.MeshStandardMaterial({
       map: textureMap,
       color: baseColor,
       roughness: 0.7,
       metalness: 0.1,
     });
-  }, [data.visual.baseColor, textureMap]);
+    // Track shader compilation for the standard material
+    if (onShaderLoad) onShaderLoad(`planet-${data.id}`);
+    return mat;
+  }, [data.visual.baseColor, textureMap, onShaderLoad]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({
@@ -165,6 +182,7 @@ export function Planet({
             depthWrite: false,
             blending: THREE.NormalBlending,
           });
+          if (onShaderLoad) onShaderLoad(`ring-${data.id}-segment-${index}`);
 
           const refCallback = (mesh: THREE.Mesh | null) => {
             if (mesh) ringRefs.current[index * 2] = mesh;
@@ -198,6 +216,7 @@ export function Planet({
             depthWrite: false,
             blending: THREE.NormalBlending,
           });
+          if (onShaderLoad) onShaderLoad(`ring-${data.id}-gap-${index}`);
 
           const refCallback = (mesh: THREE.Mesh | null) => {
             if (mesh) ringRefs.current[index * 2 + 1] = mesh;
@@ -234,6 +253,7 @@ export function Planet({
           depthWrite: false,
           blending: THREE.NormalBlending,
         });
+        if (onShaderLoad) onShaderLoad(`ring-${data.id}-segment-final`);
 
         const refCallback = (mesh: THREE.Mesh | null) => {
           if (mesh) ringRefs.current[sortedGaps.length * 2] = mesh;
@@ -270,6 +290,7 @@ export function Planet({
       depthWrite: false,
       blending: THREE.NormalBlending,
     });
+    if (onShaderLoad) onShaderLoad(`ring-${data.id}`);
 
     return (
       <mesh
@@ -318,6 +339,7 @@ export function Planet({
         castShadow
         receiveShadow
         onClick={(e) => { e.stopPropagation(); handlePlanetClick(); }}
+        name={data.id}
       />
 
       {/* Rings (if applicable) - Saturn, Uranus, Neptune */}

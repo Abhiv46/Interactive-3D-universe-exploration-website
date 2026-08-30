@@ -247,8 +247,10 @@ export function MilkyWay({ visible = true, opacity = 1, quality = 'high' }: Milk
       blending: THREE.AdditiveBlending,
       vertexColors: true,
     });
+    // Track shader compilation
+    if (onShaderLoad) onShaderLoad('milkyway-arms');
     return material;
-  }, [opacity]);
+  }, [opacity, onShaderLoad]);
 
   // Bulge material (no twinkling, softer)
   const bulgeMaterial = useMemo(() => {
