@@ -89,7 +89,9 @@
     "explanation": "Explanation",
     "date": "Date",
     "hd": "View HD",
-    "video": "Video"
+    "video": "Video",
+    "rateLimited": "Rate limit reached. Showing cached data if available.",
+    "rateLimitNote": "The NASA APOD API allows 30 requests/hour with DEMO_KEY. Please try again later or add your own API key."
   },
   "tour": {
     "title": "Guided Tour",

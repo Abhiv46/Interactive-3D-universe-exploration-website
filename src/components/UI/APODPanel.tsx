@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronDown, ChevronUp, ExternalLink, Loader2, Image as ImageIcon, Video, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, Image as ImageIcon, Video, AlertCircle, RefreshCw } from 'lucide-react';
 import { useI18n } from '../../i18n';
 import styles from './APODPanel.module.css';
 
@@ -14,17 +14,60 @@ interface APODData {
   copyright?: string;
 }
 
+// Cache key for localStorage
+const APOD_CACHE_KEY = 'apod_cache';
+const APOD_CACHE_TIME_KEY = 'apod_cache_time';
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
 export function APODPanel() {
   const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
   const [data, setData] = useState<APODData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimited, setRateLimited] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Try to load cached APOD data
+  const loadCachedAPOD = useCallback((): APODData | null => {
+    try {
+      const cachedTime = localStorage.getItem(APOD_CACHE_TIME_KEY);
+      const cachedData = localStorage.getItem(APOD_CACHE_KEY);
+
+      if (cachedTime && cachedData) {
+        const age = Date.now() - parseInt(cachedTime, 10);
+        if (age < CACHE_DURATION) {
+          return JSON.parse(cachedData);
+        }
+      }
+    } catch {
+      // Ignore cache errors
+    }
+    return null;
+  }, []);
+
+  // Save APOD data to cache
+  const saveToCache = useCallback((apodData: APODData) => {
+    try {
+      localStorage.setItem(APOD_CACHE_KEY, JSON.stringify(apodData));
+      localStorage.setItem(APOD_CACHE_TIME_KEY, Date.now().toString());
+    } catch {
+      // Ignore cache errors
+    }
+  }, []);
 
   const fetchAPOD = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setRateLimited(false);
+
+    // First, try to show cached data immediately if available
+    const cached = loadCachedAPOD();
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+      // Still try to fetch fresh data in background
+    }
 
     try {
       // Use NASA APOD API (DEMO_KEY allows 30 requests/hour, 50/day)
@@ -34,19 +77,34 @@ export function APODPanel() {
         `https://api.nasa.gov/planetary/apod?api_key=${apiKey}&thumbs=true`
       );
 
+      // Handle rate limiting (429 Too Many Requests)
+      if (response.status === 429) {
+        setRateLimited(true);
+        if (!cached) {
+          setError(t('apod.rateLimited'));
+        }
+        // If we have cached data, keep showing it silently
+        setLoading(false);
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
 
       const apodData: APODData = await response.json();
       setData(apodData);
+      saveToCache(apodData);
+      setRateLimited(false);
     } catch (err) {
       console.error('Failed to fetch APOD:', err);
-      setError(t('apod.error'));
+      if (!cached) {
+        setError(t('apod.error'));
+      }
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, loadCachedAPOD, saveToCache]);
 
   useEffect(() => {
     fetchAPOD();
@@ -119,13 +177,25 @@ export function APODPanel() {
           </div>
         )}
 
-        {error && (
+        {error && !rateLimited && (
           <div className={styles.error} role="alert">
             <AlertCircle size={24} aria-hidden="true" />
             <p>{error}</p>
             <button className={styles.retryButton} onClick={retry} type="button">
               {t('apod.retry')}
             </button>
+          </div>
+        )}
+
+        {rateLimited && (
+          <div className={styles.error} role="alert">
+            <AlertCircle size={24} aria-hidden="true" />
+            <p>{t('apod.rateLimited')}</p>
+            <button className={styles.retryButton} onClick={retry} type="button">
+              <RefreshCw size={16} aria-hidden="true" />
+              <span>{t('apod.retry')}</span>
+            </button>
+            <p className={styles.rateLimitNote}>{t('apod.rateLimitNote')}</p>
           </div>
         )}
 
