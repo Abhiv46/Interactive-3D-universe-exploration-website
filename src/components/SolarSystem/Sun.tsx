@@ -70,8 +70,8 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
   };
 
   // Geometry and materials - use high segments for smooth sphere
-  const geometry = useMemo(() => new THREE.SphereGeometry(1, 128, 128), []);
-  const coronaGeometry = useMemo(() => new THREE.SphereGeometry(1.15, 64, 64), []);
+  const geometry = useMemo(() => new THREE.SphereGeometry(1, 256, 256), []);
+  const coronaGeometry = useMemo(() => new THREE.SphereGeometry(1.15, 128, 128), []);
 
   const material = sunMaterial;
 
