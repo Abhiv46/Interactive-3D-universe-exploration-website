@@ -2,6 +2,8 @@ import { useMemo, useEffect, useState, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '../../types/orbitalElements';
+import { useScale } from '@/context/ScaleContext';
+import { VISUAL_RADIUS_SCALE, MIN_VISUAL_RADIUS } from '@/engine/Constants';
 
 interface ISSPosition {
   latitude: number;
@@ -29,8 +31,8 @@ async function fetchISSPosition(): Promise<ISSPosition | null> {
       velocity: 7.66, // Orbital velocity km/s
       timestamp: data.timestamp * 1000, // Convert to milliseconds
     };
-  } catch (error) {
-    console.warn('Failed to fetch ISS position:', error);
+  } catch {
+    // Fail silently - the panel shows a connection hint when data is unavailable
     return null;
   }
 }
@@ -62,6 +64,7 @@ interface ISSTrackerProps {
 
 export function ISSTracker({ earthBody, enabled, julianDate, timeScale }: ISSTrackerProps) {
   const { scene } = useThree();
+  const { trueScale } = useScale();
   const [issPosition, setISSPosition] = useState<ISSPosition | null>(null);
   const [issMesh, setISSMesh] = useState<THREE.Mesh | null>(null);
   const [orbitLine, setOrbitLine] = useState<THREE.Line | null>(null);
@@ -131,10 +134,14 @@ export function ISSTracker({ earthBody, enabled, julianDate, timeScale }: ISSTra
     radiator.position.set(0, 2.5, 0);
     issGeometry.add(radiator);
 
+    // Convert Earth radius to scene units (matches the rendered Planet globe)
+    const bodyScale = trueScale ? 1 : VISUAL_RADIUS_SCALE;
+    const earthRadius = earthBody.physical.radius * bodyScale;
+    const visualEarthRadius = trueScale ? earthRadius : Math.max(earthRadius, MIN_VISUAL_RADIUS);
+
     // Create orbit line (pre-calculated path)
     const orbitPoints: THREE.Vector3[] = [];
-    const earthRadius = earthBody.physical.radius;
-    const orbitRadius = earthRadius + 408; // ISS altitude
+    const orbitRadius = visualEarthRadius + 408 * bodyScale; // ISS altitude (negligible at visual scale)
 
     for (let i = 0; i <= 128; i++) {
       const angle = (i / 128) * Math.PI * 2;
@@ -156,6 +163,10 @@ export function ISSTracker({ earthBody, enabled, julianDate, timeScale }: ISSTra
     const orbit = new THREE.Line(orbitGeom, orbitMat);
     orbit.renderOrder = 5;
 
+    // Scale the ISS wire-model (~40 unit extent) to stay proportional to the
+    // rendered Earth globe instead of dwarfing it.
+    issGeometry.scale.setScalar((visualEarthRadius * 0.2) / 40);
+
     scene.add(issGeometry);
     scene.add(orbit);
 
@@ -176,20 +187,22 @@ export function ISSTracker({ earthBody, enabled, julianDate, timeScale }: ISSTra
       setISSMesh(null);
       setOrbitLine(null);
     };
-  }, [enabled, earthBody, scene]);
+  }, [enabled, earthBody, scene, trueScale]);
 
   // Update ISS position and orientation
   useFrame(() => {
     if (!enabled || !issMesh || !issPosition) return;
 
-    const earthRadius = earthBody.physical.radius;
+    const bodyScale = trueScale ? 1 : VISUAL_RADIUS_SCALE;
+    const earthRadius = earthBody.physical.radius * bodyScale;
+    const visualEarthRadius = trueScale ? earthRadius : Math.max(earthRadius, MIN_VISUAL_RADIUS);
 
     // Convert ISS lat/lon/alt to 3D position
     const pos = latLonAltToVector3(
       issPosition.latitude,
       issPosition.longitude,
       issPosition.altitude,
-      earthRadius
+      visualEarthRadius
     );
 
     issMesh.position.copy(pos);

@@ -1,7 +1,7 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, ASTEROID_COUNT } from '@/engine/Constants';
+import { ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, ASTEROID_COUNT, AU_TO_VISUAL } from '@/engine/Constants';
 import { useScale } from '@/context/ScaleContext';
 
 /**
@@ -11,6 +11,9 @@ import { useScale } from '@/context/ScaleContext';
 export function AsteroidBelt() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const { trueScale } = useScale();
+
+  // Positions are computed in meters; convert to scene units unless in true-scale mode
+  const posScale = trueScale ? 1 : AU_TO_VISUAL;
 
   // Create asteroid geometry (small irregular shapes)
   const geometry = useMemo(() => {
@@ -69,8 +72,8 @@ export function AsteroidBelt() {
 
       // Random scale (100m - 5km radius, scaled for visualization)
       const baseScale = 100 + Math.random() * 4900; // meters
-      const visualScale = trueScale ? 1 : 5e-9; // Visual scale factor
-      const scale = baseScale * visualScale;
+      const rockScale = trueScale ? 1 : 2e-4; // Exaggerated so the belt is visible as rocks
+      const scale = baseScale * rockScale;
       scales[i * 3] = scale;
       scales[i * 3 + 1] = scale * (0.5 + Math.random() * 0.5); // Slightly irregular
       scales[i * 3 + 2] = scale * (0.5 + Math.random() * 0.5);
@@ -90,9 +93,9 @@ export function AsteroidBelt() {
 
     for (let i = 0; i < ASTEROID_COUNT; i++) {
       dummy.position.set(
-        positions[i * 3],
-        positions[i * 3 + 1],
-        positions[i * 3 + 2]
+        positions[i * 3] * posScale,
+        positions[i * 3 + 1] * posScale,
+        positions[i * 3 + 2] * posScale
       );
       dummy.quaternion.set(
         rotations[i * 4],
@@ -111,7 +114,7 @@ export function AsteroidBelt() {
 
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [instanceData, trueScale]);
+  }, [instanceData, trueScale, posScale]);
 
   // Animation - orbit the asteroids
   useFrame((state, delta) => {
@@ -150,7 +153,7 @@ export function AsteroidBelt() {
       const yPos = r * Math.sin(angle) * Math.sin(inc);
       const zPos = r * Math.sin(angle) * Math.cos(inc);
 
-      dummy.position.set(xPos, yPos, zPos);
+      dummy.position.set(xPos * posScale, yPos * posScale, zPos * posScale);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     }

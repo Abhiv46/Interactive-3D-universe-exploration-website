@@ -141,6 +141,23 @@ export const KUIPER_COUNT = 5000;
 export const VISUAL_SCALE_FACTOR = 1e-9; // Visual scale multiplier
 export const TRUE_SCALE_FACTOR = 1e-11; // True scale multiplier
 
+// Visual coordinate system for the 3D scene.
+// One AU of distance maps to 2000 visual units (matches the camera framing,
+// orbit rendering, and StarField placement).
+export const AU_TO_VISUAL = 2000 / AU;
+
+// Radius exaggeration for planet/moon/sun spheres in visual (enlarged) mode.
+// Radii are inflated 3x over the distance scale so bodies stay legible at
+// typical zoom levels while preserving correct relative size order. The 3x
+// factor also keeps each planet small enough that its moons' orbital radii
+// (which use the true AU_TO_VISUAL distance scale) fall outside the globe.
+export const VISUAL_RADIUS_SCALE = AU_TO_VISUAL * 3;
+
+// Minimum rendered radius (visual units) for planets in visual mode. Rocky
+// planets (Mercury..Mars, Uranus, Neptune) would otherwise render smaller
+// than a pixel from the default camera; clamp them so they stay visible.
+export const MIN_VISUAL_RADIUS = 1.2;
+
 // Rendering limits
 export const MAX_RENDER_DISTANCE = 1e22; // ~1 Mpc
 export const MIN_RENDER_DISTANCE = 0.1; // 10 cm

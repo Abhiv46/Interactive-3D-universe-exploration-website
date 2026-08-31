@@ -1,7 +1,7 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { KUIPER_BELT_INNER, KUIPER_BELT_OUTER, KUIPER_COUNT } from '@/engine/Constants';
+import { KUIPER_BELT_INNER, KUIPER_BELT_OUTER, KUIPER_COUNT, AU_TO_VISUAL } from '@/engine/Constants';
 import { useScale } from '@/context/ScaleContext';
 
 /**
@@ -11,6 +11,9 @@ import { useScale } from '@/context/ScaleContext';
 export function KuiperBelt() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const { trueScale } = useScale();
+
+  // Positions are computed in meters; convert to scene units unless in true-scale mode
+  const posScale = trueScale ? 1 : AU_TO_VISUAL;
 
   // Create KBO geometry (slightly larger, more irregular)
   const geometry = useMemo(() => {
@@ -61,8 +64,8 @@ export function KuiperBelt() {
       // Random scale (10km - 500km radius, scaled for visualization)
       // KBOs can be quite large (Pluto is ~1188km)
       const baseScale = 10000 + Math.random() * 490000; // 10km - 500km
-      const visualScale = trueScale ? 1 : 5e-9;
-      const scale = baseScale * visualScale;
+      const rockScale = trueScale ? 1 : 1e-5; // Exaggerated so the belt is visible as small bodies
+      const scale = baseScale * rockScale;
       scales[i * 3] = scale;
       scales[i * 3 + 1] = scale * (0.6 + Math.random() * 0.4);
       scales[i * 3 + 2] = scale * (0.6 + Math.random() * 0.4);
@@ -81,9 +84,9 @@ export function KuiperBelt() {
 
     for (let i = 0; i < KUIPER_COUNT; i++) {
       dummy.position.set(
-        positions[i * 3],
-        positions[i * 3 + 1],
-        positions[i * 3 + 2]
+        positions[i * 3] * posScale,
+        positions[i * 3 + 1] * posScale,
+        positions[i * 3 + 2] * posScale
       );
       dummy.quaternion.set(
         rotations[i * 4],
@@ -102,7 +105,7 @@ export function KuiperBelt() {
 
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [instanceData, trueScale]);
+  }, [instanceData, trueScale, posScale]);
 
   // Animation - orbit the KBOs
   useFrame((state) => {
@@ -136,7 +139,7 @@ export function KuiperBelt() {
       const yPos = r * Math.sin(angle) * Math.sin(inc);
       const zPos = r * Math.sin(angle) * Math.cos(inc);
 
-      dummy.position.set(xPos, yPos, zPos);
+      dummy.position.set(xPos * posScale, yPos * posScale, zPos * posScale);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     }

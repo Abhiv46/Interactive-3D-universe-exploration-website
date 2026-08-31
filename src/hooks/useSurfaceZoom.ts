@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useCameraControls } from './useCameraControls';
 import { useScale } from '@/context/ScaleContext';
+import { VISUAL_RADIUS_SCALE, MIN_VISUAL_RADIUS } from '@/engine/Constants';
 
 /** Body IDs that have real surface elevation data */
 const BODIES_WITH_SURFACE_DATA: Set<string> = new Set(['earth', 'moon', 'mars']);
@@ -181,6 +182,7 @@ export function useSurfaceZoom() {
 /** Hook for surface-relative camera controls */
 export function useSurfaceCameraControls(body: CelestialBodyData | null, zoomLevel: number) {
   const { cameraPosition, cameraTarget, registerControls } = useCameraControls();
+  const { trueScale } = useScale();
   const controlsRef = useRef<any>(null);
 
   // Register controls
@@ -196,7 +198,10 @@ export function useSurfaceCameraControls(body: CelestialBodyData | null, zoomLev
     if (!controlsRef.current || !body) return;
 
     const controls = controlsRef.current;
-    const radius = body.physical.radius * 2000; // Visual scale
+    // Radius in scene units, matching the rendered Planet globe
+    const radius = trueScale
+      ? body.physical.radius
+      : Math.max(body.physical.radius * VISUAL_RADIUS_SCALE, MIN_VISUAL_RADIUS);
 
     if (zoomLevel > 0.5) {
       // Surface mode: orbit around a point on the surface

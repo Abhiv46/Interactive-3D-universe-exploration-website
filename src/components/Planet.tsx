@@ -9,6 +9,7 @@ import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
+import { AU_TO_VISUAL, VISUAL_RADIUS_SCALE, MIN_VISUAL_RADIUS } from '@/engine/Constants';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -38,7 +39,7 @@ interface PlanetProps {
 
 export function Planet({
   data,
-  visualScale = 1,
+  visualScale = VISUAL_RADIUS_SCALE,
   trueScale = false,
   showOrbit = true,
   orbitColor,
@@ -46,7 +47,7 @@ export function Planet({
   rotate = true,
   onClick,
   moons = [],
-  moonVisualScale = 1,
+  moonVisualScale = VISUAL_RADIUS_SCALE,
 }: PlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const ringRefs = useRef<THREE.Mesh[]>([]);
@@ -61,8 +62,6 @@ export function Planet({
 
   // Calculate position using Keplerian orbital mechanics (returns physical meters)
   // Convert to visual coordinate system: 1 AU = 2000 visual units (matches camera system)
-  // The AU constant is 149597870700 meters, so visual scale factor = 2000 / AU
-  const AU_TO_VISUAL = 2000 / 149597870700;
   const physicalPosition = useKeplerianOrbit(data.orbital!, julianDate);
 
   // Convert physical position (meters) to visual units
@@ -79,12 +78,22 @@ export function Planet({
     ? physicalOrbitPath
     : physicalOrbitPath.map(p => [p[0] * AU_TO_VISUAL, p[1] * AU_TO_VISUAL, p[2] * AU_TO_VISUAL] as [number, number, number]);
 
+  // Determine radius based on scale mode
+  // True scale = real meters. Visual scale = meters * VISUAL_RADIUS_SCALE with
+  // a minimum floor so small rocky planets stay visible.
+  const displayRadius = effectiveTrueScale
+    ? data.physical.radius
+    : Math.max(data.physical.radius * visualScale, MIN_VISUAL_RADIUS);
+
+  // For rings, scale the ring radii (multiples of the planet radius) by the same factor
+  const ringScale = effectiveTrueScale ? 1 : visualScale;
+
   // Debug log: verify position and radius are reasonable
   useEffect(() => {
     const posVec = new THREE.Vector3(position[0], position[1], position[2]);
     const distanceFromSun = posVec.length();
-    console.log(`[Planet ${data.name}] position: [${position[0].toFixed(1)}, ${position[1].toFixed(1)}, ${position[2].toFixed(1)}], distance from Sun: ${distanceFromSun.toFixed(1)}, displayRadius: ${(data.physical.radius * visualScale).toFixed(1)}, visualScale: ${visualScale}, trueScale: ${effectiveTrueScale}`);
-  }, [position, data.name, data.physical.radius, visualScale, effectiveTrueScale]);
+    console.log(`[Planet ${data.name}] distance from Sun: ${distanceFromSun.toFixed(1)} units, displayRadius: ${displayRadius.toFixed(3)} units, trueScale: ${effectiveTrueScale}`);
+  }, [position, data.name, displayRadius, effectiveTrueScale]);
 
   // Create orbit line geometry
   const orbitGeometry = useMemo(() => {
@@ -97,14 +106,6 @@ export function Planet({
 
   // Planet geometry - use segments based on LOD
   const geometry = useMemo(() => new THREE.SphereGeometry(1, 32, 32), []);
-
-  // Determine radius based on scale mode
-  const displayRadius = effectiveTrueScale
-    ? data.physical.radius
-    : data.physical.radius * visualScale;
-
-  // For rings, scale the ring radii appropriately
-  const ringScale = effectiveTrueScale ? 1 : visualScale;
 
   // Load textures with progress reporting and fallback
   const textureMap = useSafeTextureLoader(

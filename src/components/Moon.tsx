@@ -8,6 +8,7 @@ import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
+import { AU_TO_VISUAL, VISUAL_RADIUS_SCALE } from '@/engine/Constants';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -36,7 +37,7 @@ interface MoonProps {
 export function Moon({
   data,
   parentPosition,
-  visualScale = 1,
+  visualScale = VISUAL_RADIUS_SCALE,
   trueScale = false,
   showOrbit = true,
   orbitColor,
@@ -57,7 +58,6 @@ export function Moon({
 
   // Calculate position relative to parent using Keplerian orbital mechanics (returns physical meters)
   // Convert to visual coordinate system: 1 AU = 2000 visual units (matches camera system)
-  const AU_TO_VISUAL = 2000 / 149597870700;
   const physicalRelativePosition = useKeplerianOrbit(data.orbital!, julianDate);
 
   // Convert physical position (meters) to visual units

@@ -4,6 +4,7 @@ import { CelestialBodyData, OrbitalElements } from '@/types/orbitalElements';
 import { useJulianDate } from './useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
 import { fastPosition, precomputeOrbit, PrecomputedOrbit } from '@/engine/KeplerianOrbit';
+import { AU_TO_VISUAL, VISUAL_RADIUS_SCALE } from '@/engine/Constants';
 
 interface CameraControlsContextValue {
   cameraPosition: THREE.Vector3;
@@ -44,7 +45,7 @@ function calculateBodyWorldPosition(
     return position.set(0, 0, 0);
   }
 
-  const scale = trueScale ? 1 : 2000;
+  const scale = trueScale ? 1 : AU_TO_VISUAL;
   const precomputed = precomputeOrbit(body.orbital);
   const pos = fastPosition(precomputed, timeJD);
   position.set(pos[0] * scale, pos[1] * scale, pos[2] * scale);
@@ -111,9 +112,9 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
 
     let targetOffset = new THREE.Vector3(0, 0, 0);
     if (body.orbital) {
-      const scale = trueScaleRef.current ? 1 : 2000;
+      const scale = trueScaleRef.current ? 1 : VISUAL_RADIUS_SCALE;
       const radius = body.physical.radius * scale;
-      const distance = Math.max(radius * 50, 50);
+      const distance = Math.max(radius * 50, 25);
       targetOffset.set(distance, distance * 0.5, distance);
     } else if (body.id === 'sun') {
       targetOffset.set(100, 50, 100);

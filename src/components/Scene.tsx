@@ -20,6 +20,7 @@ import {
   MOON, IO, EUROPA, GANYMEDE, CALLISTO, TITAN, ENCELADUS
 } from '@/data/planets'
 import { BODIES_MAP } from '@/data/bodiesMap'
+import { SOLAR_RADIUS, VISUAL_RADIUS_SCALE } from '@/engine/Constants'
 import * as THREE from 'three'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import { useStarFieldControls } from './TimeControlUI'
@@ -192,13 +193,13 @@ function SceneInner({
       {/* Solar System - visible at solar-system scale */}
       {showSolarSystem && (
         <>
-          {/* Sun at center */}
-          <Sun onClick={() => {}} radius={5} />
+          {/* Sun at center - radius keeps real 109:1 ratio to Earth's visual radius */}
+          <Sun onClick={() => {}} radius={SOLAR_RADIUS * VISUAL_RADIUS_SCALE} />
 
           {/* Mercury - closest to Sun */}
           <Planet
             data={MERCURY}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -206,7 +207,7 @@ function SceneInner({
           {/* Venus */}
           <Planet
             data={VENUS}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -214,11 +215,11 @@ function SceneInner({
           {/* Earth orbiting Sun with real Keplerian mechanics + Moon */}
           <Planet
             data={EARTH}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
             moons={[MOON]}
-            moonVisualScale={2000}
+            moonVisualScale={VISUAL_RADIUS_SCALE}
           />
 
           {/* ISS Tracker (real-time position) */}
@@ -227,7 +228,7 @@ function SceneInner({
           {/* Mars */}
           <Planet
             data={MARS}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -235,27 +236,27 @@ function SceneInner({
           {/* Jupiter with Galilean moons */}
           <Planet
             data={JUPITER}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
             moons={[IO, EUROPA, GANYMEDE, CALLISTO]}
-            moonVisualScale={2000}
+            moonVisualScale={VISUAL_RADIUS_SCALE}
           />
 
           {/* Saturn with rings + Titan and Enceladus */}
           <Planet
             data={SATURN}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
             moons={[TITAN, ENCELADUS]}
-            moonVisualScale={2000}
+            moonVisualScale={VISUAL_RADIUS_SCALE}
           />
 
           {/* Uranus with rings */}
           <Planet
             data={URANUS}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -263,7 +264,7 @@ function SceneInner({
           {/* Neptune with rings */}
           <Planet
             data={NEPTUNE}
-            visualScale={2000}
+            visualScale={VISUAL_RADIUS_SCALE}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
