@@ -26,8 +26,10 @@ import { ISSTracker, ISSInfoPanel, useISSTracker } from './SolarSystem/ISSTracke
 import { AuroraIndicator } from './SolarSystem/AuroraIndicator';
 import { useJulianDate, useSimulationControls } from '@/hooks/useSimulationClock';
 import { BODIES_MAP } from '@/data/bodiesMap';
+import { useSettings } from '@/context/SettingsContext';
 
 function UIOverlayContent() {
+  const { settings } = useSettings();
   const [selectedBody, setSelectedBody] = useState<CelestialBodyData | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { showToast } = useToast();
@@ -101,7 +103,7 @@ function UIOverlayContent() {
       <ISSInfoPanel enabled={enabled} issPosition={issPosition} />
 
       {/* Aurora Forecast */}
-      <AuroraIndicator julianDate={julianDate} enabled={true} />
+      <AuroraIndicator julianDate={julianDate} enabled={settings.showAurora ?? true} />
 
       {/* Screenshot & Share buttons (top right) */}
       <div className="top-actions">

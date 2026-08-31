@@ -24,8 +24,8 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
   const { onTextureLoad, onShaderLoad } = useLoading();
 
   // Load sun texture with progress reporting and fallback
-  const texture = useSafeTextureLoader('/textures/sun/sun_surface.jpg', '#fff5e6');
-  const coronaTexture = useSafeTextureLoader('/textures/sun/corona.png', '#ffcc00');
+  const texture = useSafeTextureLoader('/textures/sun_diffuse.jpg', '#fff5e6');
+  const coronaTexture = useSafeTextureLoader('/textures/corona.png', '#ffcc00');
 
   // Use shader material for sun surface with animated corona
   const sunMaterial = useMemo(() => {
@@ -59,7 +59,7 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
       emissiveColor: '#fff5e6',
       emissiveIntensity: 2.0,
       textures: {
-        diffuse: '/textures/sun/sun_surface.jpg',
+        diffuse: '/textures/sun_diffuse.jpg',
       },
       hasAtmosphere: true,
       atmosphereColor: '#ffaa00',

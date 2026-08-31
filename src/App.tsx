@@ -3,11 +3,26 @@ import { UIOverlay } from './components/UIOverlay'
 import { LoadingProvider } from './components/UI/LoadingScreen'
 import { initUserProperties } from './lib/analytics'
 import { I18nProvider } from './i18n'
-import { ScaleProvider } from '@/context/ScaleContext'
+import { ScaleProvider, useScale } from '@/context/ScaleContext'
 import { CameraControlsProvider } from '@/hooks/useCameraControls'
-import { SettingsProvider } from '@/context/SettingsContext'
+import { SettingsProvider, useSettings } from '@/context/SettingsContext'
 import { StarFieldControlsProvider } from './components/TimeControlUI'
 import { useEffect } from 'react'
+
+// Bridges the SettingsContext (powered by the Settings panel) into the
+// ScaleContext (which the 3D scene reads). Keeps the "True Scale" toggle in
+// the panel and the scene's scale in sync — previously two independent state
+// containers that never talked to each other.
+function ScaleSync() {
+  const { settings } = useSettings();
+  const { setTrueScale } = useScale();
+
+  useEffect(() => {
+    setTrueScale(settings.trueScale);
+  }, [settings.trueScale, setTrueScale]);
+
+  return null;
+}
 
 function App() {
   // Initialize analytics user properties on mount
@@ -23,18 +38,20 @@ function App() {
   return (
     <I18nProvider defaultLanguage="en">
       <LoadingProvider>
-        <ScaleProvider>
-          <CameraControlsProvider>
-            <SettingsProvider>
+        <SettingsProvider>
+          <ScaleProvider>
+            {/* ScaleSync must sit inside BOTH providers to read settings -> write scale */}
+            <ScaleSync />
+            <CameraControlsProvider>
               <StarFieldControlsProvider>
                 <RenderStateProvider>
                   <Scene />
                   <UIOverlay />
                 </RenderStateProvider>
               </StarFieldControlsProvider>
-            </SettingsProvider>
-          </CameraControlsProvider>
-        </ScaleProvider>
+            </CameraControlsProvider>
+          </ScaleProvider>
+        </SettingsProvider>
       </LoadingProvider>
     </I18nProvider>
   )

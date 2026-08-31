@@ -112,6 +112,13 @@ export function Planet({
     data.visual.textures?.diffuse,
     data.visual.baseColor
   );
+  // Additional surface detail textures (present in data, previously never loaded).
+  // Note: MeshStandardMaterial is physically-based, so it uses normalMap +
+  // bumpMap for relief. (The data's `specular` map would need a
+  // MeshPhysicalMaterial / specularColorMap to express reflectivity, so it is
+  // intentionally not wired here.)
+  const normalMap = useSafeTextureLoader(data.visual.textures?.normal);
+  const bumpMap = useSafeTextureLoader(data.visual.textures?.elevation);
 
   // Create material with planet's base color
   const material = useMemo(() => {
@@ -121,11 +128,14 @@ export function Planet({
       color: baseColor,
       roughness: 0.7,
       metalness: 0.1,
+      normalMap,
+      bumpMap,
+      bumpScale: 0.04,
     });
     // Track shader compilation for the standard material
     if (onShaderLoad) onShaderLoad(`planet-${data.id}`);
     return mat;
-  }, [data.visual.baseColor, textureMap, onShaderLoad]);
+  }, [data.visual.baseColor, textureMap, normalMap, bumpMap, onShaderLoad]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({

@@ -55,6 +55,9 @@ export function Moon({
 
   // Load texture with progress reporting and fallback
   const textureMap = useSafeTextureLoader(data.visual?.textures?.diffuse, data.visual?.baseColor);
+  // Additional surface detail textures (present in moons.ts data, previously never loaded)
+  const normalMap = useSafeTextureLoader(data.visual?.textures?.normal);
+  const bumpMap = useSafeTextureLoader(data.visual?.textures?.elevation);
 
   // Calculate position relative to parent using Keplerian orbital mechanics (returns physical meters)
   // Convert to visual coordinate system: 1 AU = 2000 visual units (matches camera system)
@@ -99,11 +102,14 @@ export function Moon({
       color: baseColor,
       roughness: 0.8,
       metalness: 0.05,
+      normalMap,
+      bumpMap,
+      bumpScale: 0.04,
     });
     // Track shader compilation
     if (onShaderLoad) onShaderLoad(`moon-${data.id}`);
     return mat;
-  }, [data.visual.baseColor, textureMap, onShaderLoad]);
+  }, [data.visual.baseColor, textureMap, normalMap, bumpMap, onShaderLoad]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({

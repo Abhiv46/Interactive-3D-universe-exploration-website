@@ -148,6 +148,11 @@ function SceneInner({
   const showStarField = scaleMode === 'solar-system' || scaleMode === 'interstellar';
   const showMilkyWay = (scaleMode === 'galactic' || scaleMode === 'intergalactic') && settings.showMilkyWay;
 
+  // Visual Scale Factor: user-adjustable multiplier on body SIZE only (orbital
+  // distances stay fixed). Default 1000 = 1x. The Settings slider writes this.
+  const visualScaleFactor = settings.visualScaleFactor ?? 1000;
+  const effectiveVisualScale = VISUAL_RADIUS_SCALE * (visualScaleFactor / 1000);
+
   // Touch controls - must be inside Canvas
   const { registerControls: registerTouchControls } = useTouchControls({
     enabled: true,
@@ -194,12 +199,12 @@ function SceneInner({
       {showSolarSystem && (
         <>
           {/* Sun at center - radius keeps real 109:1 ratio to Earth's visual radius */}
-          <Sun onClick={() => {}} radius={SOLAR_RADIUS * VISUAL_RADIUS_SCALE} />
+          <Sun onClick={() => {}} radius={SOLAR_RADIUS * effectiveVisualScale} />
 
           {/* Mercury - closest to Sun */}
           <Planet
             data={MERCURY}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -207,7 +212,7 @@ function SceneInner({
           {/* Venus */}
           <Planet
             data={VENUS}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -215,11 +220,11 @@ function SceneInner({
           {/* Earth orbiting Sun with real Keplerian mechanics + Moon */}
           <Planet
             data={EARTH}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
             moons={[MOON]}
-            moonVisualScale={VISUAL_RADIUS_SCALE}
+            moonVisualScale={effectiveVisualScale}
           />
 
           {/* ISS Tracker (real-time position) */}
@@ -228,7 +233,7 @@ function SceneInner({
           {/* Mars */}
           <Planet
             data={MARS}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -236,27 +241,27 @@ function SceneInner({
           {/* Jupiter with Galilean moons */}
           <Planet
             data={JUPITER}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
             moons={[IO, EUROPA, GANYMEDE, CALLISTO]}
-            moonVisualScale={VISUAL_RADIUS_SCALE}
+            moonVisualScale={effectiveVisualScale}
           />
 
           {/* Saturn with rings + Titan and Enceladus */}
           <Planet
             data={SATURN}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
             moons={[TITAN, ENCELADUS]}
-            moonVisualScale={VISUAL_RADIUS_SCALE}
+            moonVisualScale={effectiveVisualScale}
           />
 
           {/* Uranus with rings */}
           <Planet
             data={URANUS}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />
@@ -264,7 +269,7 @@ function SceneInner({
           {/* Neptune with rings */}
           <Planet
             data={NEPTUNE}
-            visualScale={VISUAL_RADIUS_SCALE}
+            visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
           />

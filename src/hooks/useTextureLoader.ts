@@ -1,7 +1,7 @@
 import { useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useLoading } from '@/components/UI/LoadingScreen';
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect, useState } from 'react';
 
 /**
  * Wrapper around useLoader that:
@@ -83,54 +83,58 @@ export function createFallbackTexture(color: string = '#888888'): THREE.Texture 
 }
 
 /**
- * Safe texture loader that always returns a valid texture
- * Uses fallback if the real texture fails to load
- * Deduplicates texture load reports to prevent counter inflation
+ * Safe texture loader that returns a real texture once it finishes loading.
+ *
+ * IMPORTANT: This deliberately does NOT use `useLoader`. `useLoader` suspends
+ * by throwing a Promise that must bubble to a <Suspense> boundary. When this
+ * hook wrapped it in try/catch, that Promise was caught as an "error", so
+ * EVERY texture skipped straight to the flat canvas fallback — which is why
+ * every planet looked perfectly flat. Instead we load with TextureLoader.load
+ * in an effect and return null until the real texture arrives, letting the
+ * material render its base color meanwhile.
+ *
+ * Deduplicates load reports so the loading counter isn't inflated.
  */
 export function useSafeTextureLoader(url: string | undefined | null, fallbackColor?: string): THREE.Texture | null {
   const { onTextureLoad } = useLoading();
   const baseColor = fallbackColor || '#888888';
-  const reportedUrlsRef = useRef<Set<string>>(new Set());
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const reportedRef = useRef(false);
 
-  // Create fallback texture once and memoize it
-  const fallbackTexture = useMemo(() => createFallbackTexture(baseColor), [baseColor]);
+  useEffect(() => {
+    let cancelled = false;
+    setTexture(null);
+    reportedRef.current = false;
 
-  // Track if we've already reported this URL
-  const alreadyReported = useRef(false);
+    // No texture file for this body -> stay flat (material uses base color).
+    if (!url) return;
 
-  if (!url) {
-    if (!alreadyReported.current) {
-      alreadyReported.current = true;
-      if (onTextureLoad) onTextureLoad({ type: 'fallback', url: 'none', texture: fallbackTexture });
-    }
-    return fallbackTexture;
-  }
-
-  // Create a unique key for this URL to deduplicate reports
-  const reportKey = `loaded:${url}`;
-
-  try {
-    const texture = useLoader(
-      THREE.TextureLoader,
+    const loader = new THREE.TextureLoader();
+    loader.load(
       url,
-      undefined,
-      undefined
-    ) as THREE.Texture | null;
+      (tex) => {
+        if (cancelled) return;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 16;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        setTexture(tex);
+        if (!reportedRef.current) {
+          reportedRef.current = true;
+          if (onTextureLoad) onTextureLoad({ type: 'loaded', url, texture: tex });
+        }
+      },
+      undefined, // onProgress - not tracked
+      (error) => {
+        if (cancelled) return;
+        console.warn('[SafeTextureLoader] Failed to load:', url, error);
+      }
+    );
 
-    if (texture && !reportedUrlsRef.current.has(reportKey)) {
-      reportedUrlsRef.current.add(reportKey);
-      if (onTextureLoad) onTextureLoad({ type: 'loaded', url, texture });
-      return texture;
-    }
-  } catch (error) {
-    console.warn('[SafeTextureLoader] Failed to load:', url, error);
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [url, baseColor, onTextureLoad]);
 
-  // Fallback - only report once per URL
-  const fallbackKey = `fallback:${url}`;
-  if (!reportedUrlsRef.current.has(fallbackKey)) {
-    reportedUrlsRef.current.add(fallbackKey);
-    if (onTextureLoad) onTextureLoad({ type: 'fallback', url, texture: fallbackTexture });
-  }
-  return fallbackTexture;
+  return texture;
 }

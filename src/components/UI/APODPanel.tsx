@@ -19,6 +19,35 @@ const APOD_CACHE_KEY = 'apod_cache';
 const APOD_CACHE_TIME_KEY = 'apod_cache_time';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
+/**
+ * NASA APOD video entries link straight to a YouTube/Vimeo watch page, which the
+ * provider refuses to render inside an iframe (X-Frame-Options / CSP). Rewrite
+ * them to the provider's embeddable player URL so the video actually plays.
+ * Returns the original URL when it isn't one of the known providers.
+ */
+function toEmbeddableVideoUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    let host = u.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+
+    if (host === 'youtu.be') {
+      const id = u.pathname.slice(1).split('/')[0];
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+    if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      const id = u.searchParams.get('v');
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+    if (host === 'vimeo.com') {
+      const id = u.pathname.split('/').filter(Boolean)[0];
+      if (id) return `https://player.vimeo.com/video/${id}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
 export function APODPanel() {
   const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -217,9 +246,10 @@ export function APODPanel() {
               {data.media_type === 'video' ? (
                 <div className={styles.videoWrapper}>
                   <iframe
-                    src={data.url}
+                    src={toEmbeddableVideoUrl(data.url)}
                     title={data.title}
                     allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     className={styles.video}
                     aria-label={t('apod.video')}
                   />

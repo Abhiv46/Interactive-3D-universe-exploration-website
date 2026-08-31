@@ -2,54 +2,70 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getAnalytics, type Analytics, isSupported } from 'firebase/analytics';
 
-// Firebase configuration - replace with your own config from Firebase Console
-// For development, these can be placeholder values
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'demo-project.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'demo-project',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'demo-project.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:123456789:web:abcdef',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-XXXXXXXXXX',
-};
+/**
+ * Firebase is only initialized when a REAL config is present in the environment
+ * (.env with VITE_FIREBASE_* vars). Without it, nothing is initialized and NO
+ * network calls happen. The previous code fell back to placeholder values
+ * (demo-project / G-XXXXXXXXXX), which made the Firebase SDK fire real HTTP
+ * requests that the servers rejected with 400 — spamming the console on every
+ * load and on every analytics event.
+ */
+const hasRealConfig =
+  typeof import.meta.env.VITE_FIREBASE_API_KEY === 'string' &&
+  import.meta.env.VITE_FIREBASE_API_KEY.length > 0 &&
+  typeof import.meta.env.VITE_FIREBASE_PROJECT_ID === 'string' &&
+  import.meta.env.VITE_FIREBASE_PROJECT_ID.length > 0;
 
-// Initialize Firebase app (singleton) - wrapped in try-catch to fail silently
+const firebaseConfig = hasRealConfig
+  ? {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+      appId: import.meta.env.VITE_FIREBASE_APP_ID,
+      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+    }
+  : null;
+
+// Initialize Firebase app (singleton) - only when a real config exists
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let analytics: Analytics | null = null;
 
-try {
-  if (getApps().length === 0) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApps()[0];
+if (firebaseConfig) {
+  try {
+    if (getApps().length === 0) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApps()[0];
+    }
+
+    if (app) {
+      db = getFirestore(app);
+    }
+  } catch {
+    // Fail silently
+    app = null;
+    db = null;
   }
 
-  if (app) {
-    db = getFirestore(app);
-  }
-} catch {
-  // Fail silently without logging - demo config expected to fail
-  app = null;
-  db = null;
-}
-
-// Initialize Analytics only in browser and if supported
-if (typeof window !== 'undefined' && app) {
-  isSupported()
-    .then((supported) => {
-      if (supported && app) {
-        try {
-          analytics = getAnalytics(app);
-        } catch {
-          // Fail silently
+  // Initialize Analytics only in browser and if supported
+  if (typeof window !== 'undefined' && app) {
+    isSupported()
+      .then((supported) => {
+        if (supported && app) {
+          try {
+            analytics = getAnalytics(app);
+          } catch {
+            // Fail silently
+          }
         }
-      }
-    })
-    .catch(() => {
-      // Fail silently
-    });
+      })
+      .catch(() => {
+        // Fail silently
+      });
+  }
 }
 
 export { app, db, analytics };
