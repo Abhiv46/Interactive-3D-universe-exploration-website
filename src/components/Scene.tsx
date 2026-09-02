@@ -107,9 +107,6 @@ function SceneContent() {
             settings={settings}
           />
         </GalaxyCameraProvider>
-        <color attach="background" args={[0x000000]} />
-        <ambientLight intensity={0.1} />
-        <pointLight position={[0, 0, 0]} intensity={2} color="#fff5e6" distance={0} decay={2} />
       </Canvas>
       {/* Time Control UI Overlay - MUST be outside Canvas (renders HTML, not Three.js objects) */}
       <TimeControlUI />
@@ -173,8 +170,12 @@ function SceneInner({
   return (
     <>
       <color attach="background" args={[0x000000]} />
-      <ambientLight intensity={0.1} />
-      <pointLight position={[0, 0, 0]} intensity={2} color="#fff5e6" distance={0} decay={2} />
+      {/* Sun is the primary light source (at origin, physically-correct inverse-square falloff) */}
+      <pointLight position={[0, 0, 0]} intensity={2.4} color="#fff3e0" distance={0} decay={2} />
+      {/* Subtle warm/cool hemisphere fill so dark sides of planets aren't pure black,
+          adding cinematic depth instead of a flat ambient wash. */}
+      <hemisphereLight args={['#ffe9cc', '#16224a', 0.5]} />
+      <ambientLight intensity={0.05} />
 
       {/* Background star field - rendered at 1 million units, behind solar system */}
       {showStarField && (
