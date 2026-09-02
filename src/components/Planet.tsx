@@ -10,6 +10,7 @@ import { trackPlanetClick } from '@/lib/analytics';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 import { AU_TO_VISUAL, VISUAL_RADIUS_SCALE, MIN_VISUAL_RADIUS } from '@/engine/Constants';
+import { getPBR, markAsLinearTexture } from '@/engine/PlanetMaterials';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -120,22 +121,27 @@ export function Planet({
   const normalMap = useSafeTextureLoader(data.visual.textures?.normal);
   const bumpMap = useSafeTextureLoader(data.visual.textures?.elevation);
 
-  // Create material with planet's base color
+  const pbr = getPBR(data.id);
+
+  // Create material with planet's base color + per-body PBR properties
   const material = useMemo(() => {
     const baseColor = new THREE.Color(data.visual.baseColor);
+    // Normal/bump maps are data (linear), not color (sRGB) — decode correctly
+    markAsLinearTexture(normalMap);
+    markAsLinearTexture(bumpMap);
     const mat = new THREE.MeshStandardMaterial({
       map: textureMap,
       color: baseColor,
-      roughness: 0.7,
-      metalness: 0.1,
+      roughness: pbr.roughness,
+      metalness: pbr.metalness,
       normalMap,
       bumpMap,
-      bumpScale: 0.04,
+      bumpScale: pbr.bumpScale ?? 0.04,
     });
     // Track shader compilation for the standard material
     if (onShaderLoad) onShaderLoad(`planet-${data.id}`);
     return mat;
-  }, [data.visual.baseColor, textureMap, normalMap, bumpMap, onShaderLoad]);
+  }, [data.visual.baseColor, textureMap, normalMap, bumpMap, pbr, onShaderLoad]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({

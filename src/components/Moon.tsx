@@ -9,6 +9,7 @@ import { trackPlanetClick } from '@/lib/analytics';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 import { AU_TO_VISUAL, VISUAL_RADIUS_SCALE } from '@/engine/Constants';
+import { getPBR, markAsLinearTexture } from '@/engine/PlanetMaterials';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -94,22 +95,27 @@ export function Moon({
     ? data.physical.radius
     : data.physical.radius * visualScale;
 
+  const pbr = getPBR(data.id);
+
   // Create material
   const material = useMemo(() => {
     const baseColor = new THREE.Color(data.visual.baseColor);
+    // Normal/bump maps are data (linear), not color (sRGB) — decode correctly
+    markAsLinearTexture(normalMap);
+    markAsLinearTexture(bumpMap);
     const mat = new THREE.MeshStandardMaterial({
       map: textureMap,
       color: baseColor,
-      roughness: 0.8,
-      metalness: 0.05,
+      roughness: pbr.roughness,
+      metalness: pbr.metalness,
       normalMap,
       bumpMap,
-      bumpScale: 0.04,
+      bumpScale: pbr.bumpScale ?? 0.04,
     });
     // Track shader compilation
     if (onShaderLoad) onShaderLoad(`moon-${data.id}`);
     return mat;
-  }, [data.visual.baseColor, textureMap, normalMap, bumpMap, onShaderLoad]);
+  }, [data.visual.baseColor, textureMap, normalMap, bumpMap, pbr, onShaderLoad]);
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({

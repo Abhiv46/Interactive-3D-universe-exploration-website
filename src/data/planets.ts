@@ -264,9 +264,9 @@ export const EARTH: CelestialBodyData = {
     '#3b73b8',
     {
       diffuse: '/textures/earth_diffuse.jpg',
-      normal: '/textures/earth_normal.jpg',
-      specular: '/textures/earth_specular.jpg',
-      elevation: '/textures/earth_elevation.jpg',
+      normal: '/textures/earth_normal_map.tif',
+      specular: '/textures/earth_specular_map.tif',
+      elevation: '/textures/earth_elevation.png',
       night: '/textures/earth_night.jpg',
       clouds: '/textures/earth_clouds.jpg',
     },
@@ -319,7 +319,7 @@ export const MOON: CelestialBodyData = {
     {
       diffuse: '/textures/moon_diffuse.jpg',
       normal: '/textures/moon_normal.jpg',
-      elevation: '/textures/moon_elevation.jpg',
+      elevation: '/textures/moon_elevation.png',
     },
     false,
     undefined,
@@ -371,7 +371,7 @@ export const MARS: CelestialBodyData = {
     {
       diffuse: '/textures/mars_diffuse.jpg',
       normal: '/textures/mars_normal.jpg',
-      elevation: '/textures/mars_elevation.jpg',
+      elevation: '/textures/mars_elevation.png',
     },
     true,
     '#e8a87c',
