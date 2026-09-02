@@ -10,6 +10,7 @@ import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 import { AU_TO_VISUAL, VISUAL_RADIUS_SCALE } from '@/engine/Constants';
 import { getPBR, markAsLinearTexture } from '@/engine/PlanetMaterials';
+import { createAtmosphereMaterial, getAtmosphereScale, hasAtmosphereConfig } from '@/shaders/AtmosphereShader';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -117,6 +118,19 @@ export function Moon({
     return mat;
   }, [data.visual.baseColor, textureMap, normalMap, bumpMap, pbr, onShaderLoad]);
 
+  // Fresnel atmosphere glow (e.g. Titan's thick haze)
+  const hasAtmosphere = hasAtmosphereConfig(data.id);
+  const atmosphere = useMemo(() => {
+    if (!hasAtmosphere) return null;
+    const material = createAtmosphereMaterial(data.id);
+    if (onShaderLoad) onShaderLoad(`atmosphere-${data.id}`);
+    return {
+      material,
+      geometry: new THREE.SphereGeometry(1, 32, 32),
+      scale: displayRadius * getAtmosphereScale(data.id),
+    };
+  }, [hasAtmosphere, data.id, displayRadius, onShaderLoad]);
+
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({
     color: new THREE.Color(orbitColor || data.visual.orbitColor || '#666688'),
@@ -175,6 +189,16 @@ export function Moon({
         onClick={(e) => { e.stopPropagation(); handleMoonClick(); }}
         name={data.id}
       />
+
+      {/* Fresnel atmosphere glow (e.g. Titan's haze) */}
+      {atmosphere && (
+        <mesh
+          geometry={atmosphere.geometry}
+          material={atmosphere.material}
+          scale={[atmosphere.scale, atmosphere.scale, atmosphere.scale]}
+          renderOrder={3}
+        />
+      )}
     </group>
   );
 }

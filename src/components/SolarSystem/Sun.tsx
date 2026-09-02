@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { CelestialBodyData } from '../../types/orbitalElements';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
-import { createSunMaterial } from '@/shaders/SunShader';
+import { createSunMaterial, createCoronaShaderMaterial } from '@/shaders/SunShader';
 
 interface SunProps {
   onClick: (object: {
@@ -25,7 +25,6 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
 
   // Load sun texture with progress reporting and fallback
   const texture = useSafeTextureLoader('/textures/sun_diffuse.jpg', '#fff5e6');
-  const coronaTexture = useSafeTextureLoader('/textures/corona.png', '#ffcc00');
 
   // Use shader material for sun surface with animated corona
   const sunMaterial = useMemo(() => {
@@ -71,24 +70,19 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
 
   // Geometry and materials - use high segments for smooth sphere
   const geometry = useMemo(() => new THREE.SphereGeometry(1, 256, 256), []);
-  const coronaGeometry = useMemo(() => new THREE.SphereGeometry(1.15, 128, 128), []);
+  // Corona sphere sits larger than the photosphere; the shader's halo/streamer
+  // falloff drives the visible glow so the mesh size only bounds its extent.
+  const coronaGeometry = useMemo(() => new THREE.SphereGeometry(1.45, 128, 128), []);
 
   const material = sunMaterial;
 
+  // Procedural animated corona (no texture dependency)
   const coronaMaterial = useMemo(() => {
-    const mat = new THREE.MeshBasicMaterial({
-      map: coronaTexture,
-      color: 0xffcc00,
-      transparent: true,
-      opacity: 0.3,
-      depthWrite: false,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
-    });
+    const mat = createCoronaShaderMaterial();
     // Track shader compilation
     if (onShaderLoad) onShaderLoad('sun-corona');
     return mat;
-  }, [coronaTexture, onShaderLoad]);
+  }, [onShaderLoad]);
 
   // Point light for solar illumination
   useEffect(() => {
@@ -111,6 +105,9 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
   useFrame((state, delta) => {
     if (sunMaterial && sunMaterial.uniforms && sunMaterial.uniforms.uTime) {
       sunMaterial.uniforms.uTime.value = state.clock.getElapsedTime();
+    }
+    if (coronaMaterial && coronaMaterial.uniforms && coronaMaterial.uniforms.uTime) {
+      coronaMaterial.uniforms.uTime.value = state.clock.getElapsedTime();
     }
     if (coronaRef.current) {
       coronaRef.current.rotation.y += delta * 0.0001;

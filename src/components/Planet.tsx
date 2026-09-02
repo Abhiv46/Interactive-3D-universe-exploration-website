@@ -11,6 +11,7 @@ import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 import { AU_TO_VISUAL, VISUAL_RADIUS_SCALE, MIN_VISUAL_RADIUS } from '@/engine/Constants';
 import { getPBR, markAsLinearTexture } from '@/engine/PlanetMaterials';
+import { createAtmosphereMaterial, getAtmosphereScale, hasAtmosphereConfig } from '@/shaders/AtmosphereShader';
 
 // Use Line from three to avoid SVG <line> conflict
 const Line = THREE.Line;
@@ -174,6 +175,19 @@ export function Planet({
       });
     }
   });
+
+  // Fresnel atmosphere glow (Earth, Venus, Mars, gas giants, ...)
+  const hasAtmosphere = hasAtmosphereConfig(data.id);
+  const atmosphere = useMemo(() => {
+    if (!hasAtmosphere) return null;
+    const material = createAtmosphereMaterial(data.id);
+    if (onShaderLoad) onShaderLoad(`atmosphere-${data.id}`);
+    return {
+      material,
+      geometry: new THREE.SphereGeometry(1, 48, 48),
+      scale: displayRadius * getAtmosphereScale(data.id),
+    };
+  }, [hasAtmosphere, data.id, displayRadius, onShaderLoad]);
 
   // Create rings if planet has them (with gaps for Saturn)
   const rings = useMemo(() => {
@@ -365,6 +379,16 @@ export function Planet({
         onClick={(e) => { e.stopPropagation(); handlePlanetClick(); }}
         name={data.id}
       />
+
+      {/* Fresnel atmosphere glow - BackSide sphere with additive blending */}
+      {atmosphere && (
+        <mesh
+          geometry={atmosphere.geometry}
+          material={atmosphere.material}
+          scale={[atmosphere.scale, atmosphere.scale, atmosphere.scale]}
+          renderOrder={3}
+        />
+      )}
 
       {/* Rings (if applicable) - Saturn, Uranus, Neptune */}
       {rings}
