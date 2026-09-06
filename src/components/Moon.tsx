@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
-import { useJulianDate } from '@/hooks/useSimulationClock';
+import { useJulianDate, useSimulationPlaying } from '@/hooks/useSimulationClock';
 import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
 import { useLoading } from '@/components/UI/LoadingScreen';
@@ -49,6 +49,7 @@ export function Moon({
 }: MoonProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const julianDate = useJulianDate();
+  const isPlaying = useSimulationPlaying();
   const { trueScale: contextTrueScale } = useScale();
   const { onTextureLoad, onShaderLoad } = useLoading();
 
@@ -147,8 +148,9 @@ export function Moon({
     }
   }, [onClick, data]);
 
-  // Axial rotation
+  // Axial rotation. Freeze when paused so the canvas settles.
   useFrame((_state, delta) => {
+    if (!isPlaying) return;
     if (rotate && meshRef.current && data.physical.rotationPeriod > 0) {
       const angularSpeed = (2 * Math.PI) / data.physical.rotationPeriod;
       meshRef.current.rotation.y += angularSpeed * delta;

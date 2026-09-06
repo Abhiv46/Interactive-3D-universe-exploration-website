@@ -273,6 +273,27 @@ const GalaxyCameraContext = createContext<GalaxyCameraContextValue | null>(null)
 
 export function GalaxyCameraProvider({ children }: { children: ReactNode }) {
   const cameraData = useGalaxyCamera();
+  const { camera } = useThree();
+
+  // Apply the active scale config's projection bounds to the live camera.
+  // (GalaxyCameraController, which used to do this, was never mounted — leaving
+  // the camera at R3F's default far=1000, so the Sun at ~1505 units and every
+  // planet beyond it were silently clipped out of the frustum. The Provider is
+  // what actually wraps the scene, so the projection update belongs here.)
+  useEffect(() => {
+    camera.near = cameraData.config.near;
+    camera.far = cameraData.config.far;
+    (camera as PerspectiveCamera).fov = cameraData.config.fov;
+    camera.updateProjectionMatrix();
+  }, [camera, cameraData.config]);
+
+  // Debug/testing hook: switch scale mode programmatically.
+  useEffect(() => {
+    (window as any).__galaxyCamera = { transitionToScale: cameraData.transitionToScale };
+    return () => {
+      delete (window as any).__galaxyCamera;
+    };
+  }, [cameraData.transitionToScale]);
 
   return (
     <GalaxyCameraContext.Provider value={{

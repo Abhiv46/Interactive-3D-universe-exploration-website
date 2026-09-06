@@ -47,27 +47,46 @@ export function useScreenshot() {
       return null;
     }
 
+    const originalSize = renderer.getSize(new THREE.Vector2());
+    const originalPixelRatio = renderer.getPixelRatio();
+    const mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+
+    // Render one still at `mult`× and return its data URL. The drawing buffer
+    // size and pixel ratio are ALWAYS restored on the way out — an encode
+    // failure must never leave the interactive canvas stuck at the enlarged
+    // resolution (a previous bug that tanked the renderer under SwiftShader).
+    const exportStill = async (mult: number): Promise<string | null> => {
+      try {
+        const width = originalSize.x * mult;
+        const height = originalSize.y * mult;
+        renderer.setSize(width, height, false);
+        renderer.setPixelRatio(1); // 1px per device px; `mult` picks the resolution
+        renderer.render(scene, camera);
+        const dataUrl = renderer.domElement.toDataURL(mimeType, quality);
+        renderer.setSize(originalSize.x, originalSize.y, false);
+        renderer.setPixelRatio(originalPixelRatio);
+        return dataUrl;
+      } catch {
+        return null;
+      }
+    };
+
     try {
-      // Store original settings
-      const originalSize = renderer.getSize(new THREE.Vector2());
-      const originalPixelRatio = renderer.getPixelRatio();
+      let dataUrl = await exportStill(multiplier);
 
-      // Set high resolution for screenshot
-      const width = originalSize.x * multiplier;
-      const height = originalSize.y * multiplier;
-      renderer.setSize(width, height, false);
-      renderer.setPixelRatio(1); // Use 1 for screenshot, multiplier handles resolution
+      // A high-resolution export can fail under memory pressure (headless
+      // SwiftShader can't always build a 2× buffer). Fall back to a 1× still
+      // before giving up, so the user still gets a screenshot; the interactive
+      // view never regresses because exportStill restores size on every path.
+      if (!dataUrl && multiplier > 1) {
+        console.warn(`Screenshot: ${multiplier}× export failed, retrying at 1×`);
+        dataUrl = await exportStill(1);
+      }
 
-      // Render to canvas
-      renderer.render(scene, camera);
-
-      // Get data URL
-      const mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp';
-      const dataUrl = renderer.domElement.toDataURL(mimeType, quality);
-
-      // Restore original settings
-      renderer.setSize(originalSize.x, originalSize.y, false);
-      renderer.setPixelRatio(originalPixelRatio);
+      if (!dataUrl) {
+        console.error('Screenshot capture failed: canvas export failed at every resolution');
+        return null;
+      }
 
       // Trigger download
       const link = document.createElement('a');
@@ -78,11 +97,14 @@ export function useScreenshot() {
       link.click();
       document.body.removeChild(link);
 
-      // Revoke object URL if it was a blob URL (not needed for data URL)
       return dataUrl;
     } catch (error) {
       console.error('Screenshot capture failed:', error);
       return null;
+    } finally {
+      // Belt-and-braces: never leave the renderer in a resized state.
+      renderer.setSize(originalSize.x, originalSize.y, false);
+      renderer.setPixelRatio(originalPixelRatio);
     }
   }, []);
 
@@ -102,10 +124,10 @@ export function useScreenshot() {
       return null;
     }
 
-    try {
-      const originalSize = renderer.getSize(new THREE.Vector2());
-      const originalPixelRatio = renderer.getPixelRatio();
+    const originalSize = renderer.getSize(new THREE.Vector2());
+    const originalPixelRatio = renderer.getPixelRatio();
 
+    try {
       const width = originalSize.x * multiplier;
       const height = originalSize.y * multiplier;
       renderer.setSize(width, height, false);
@@ -118,13 +140,14 @@ export function useScreenshot() {
         renderer.domElement.toBlob(resolve, format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp', quality);
       });
 
-      renderer.setSize(originalSize.x, originalSize.y, false);
-      renderer.setPixelRatio(originalPixelRatio);
-
       return blob;
     } catch (error) {
       console.error('Screenshot blob capture failed:', error);
       return null;
+    } finally {
+      // Always restore the interactive canvas, even on a failed export.
+      renderer.setSize(originalSize.x, originalSize.y, false);
+      renderer.setPixelRatio(originalPixelRatio);
     }
   }, []);
 

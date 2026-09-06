@@ -1,5 +1,12 @@
-.container {
-  position: relative;
+/* Collapsed launcher pill: anchored top-left, just below the fixed top bar
+   (which is ~170px tall). As a bare `position: relative` block it used to fill
+   the whole width and sit (z-index 100, later in DOM) on top of the top bar,
+   swallowing every click over the date picker, language toggle, and search bar.
+   Expanded state is positioned by `.expanded` below. */
+.container:not(.expanded) {
+  position: fixed;
+  top: 180px;
+  left: 24px;
   z-index: 100;
 }
 
@@ -41,6 +48,7 @@
   top: 80px;
   right: 20px;
   width: 380px;
+  z-index: 300;
   max-height: calc(100vh - 100px);
   background: var(--bg-secondary, rgba(20, 20, 40, 0.98));
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));

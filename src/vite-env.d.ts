@@ -24,4 +24,6 @@ interface Window {
   };
   __galaxyCamera?: any;
   __julianDate__?: number;
+  /** Test seam: overrides ScreenshotButton's 2× default (see ScreenshotButton.tsx). */
+  __screenshotMultiplier__?: number;
 }

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { KUIPER_BELT_INNER, KUIPER_BELT_OUTER, KUIPER_COUNT, AU_TO_VISUAL } from '@/engine/Constants';
 import { useScale } from '@/context/ScaleContext';
+import { useSimulationPlaying } from '@/hooks/useSimulationClock';
 
 /**
  * Kuiper Belt component using InstancedMesh for performance
@@ -11,6 +12,7 @@ import { useScale } from '@/context/ScaleContext';
 export function KuiperBelt() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const { trueScale } = useScale();
+  const isPlaying = useSimulationPlaying();
 
   // Positions are computed in meters; convert to scene units unless in true-scale mode
   const posScale = trueScale ? 1 : AU_TO_VISUAL;
@@ -107,10 +109,11 @@ export function KuiperBelt() {
     mesh.computeBoundingSphere();
   }, [instanceData, trueScale, posScale]);
 
-  // Animation - orbit the KBOs
+  // Animation - orbit the KBOs. Freeze when paused.
   useFrame((state) => {
     const mesh = meshRef.current;
     if (!mesh) return;
+    if (!isPlaying) return;
 
     const time = state.clock.getElapsedTime();
     const { positions } = instanceData;

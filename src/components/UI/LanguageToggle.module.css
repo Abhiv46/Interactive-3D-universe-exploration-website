@@ -50,6 +50,19 @@
   color: var(--text-secondary, #aaa);
 }
 
+/* Portal mount: fixed, zero-height anchor at the button's top-left corner.
+   The listbox renders here through a portal to <body> so it escapes the
+   `.top-bar` z-index 100 stacking context (which capped the dropdown's own
+   z-index and let the z-index 200 settings panel cover it). Height 0 keeps
+   the mount itself from painting over anything; the absolutely-positioned
+   `.dropdown` below resolves `bottom: calc(100% + 8px)` against this
+   zero-height box, preserving the original upward-opening geometry. */
+.dropdownMount {
+  position: fixed;
+  height: 0;
+  z-index: 1000;
+}
+
 .dropdown {
   position: absolute;
   bottom: calc(100% + 8px);

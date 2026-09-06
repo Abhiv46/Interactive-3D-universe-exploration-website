@@ -1,6 +1,7 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useSimulationPlaying } from '@/hooks/useSimulationClock';
 import { BRIGHT_STARS, generateAdditionalStars, filterStarsByMagnitude, bvToColor, magnitudeToPointSize } from '../../data/stars';
 
 interface StarFieldProps {
@@ -11,6 +12,7 @@ interface StarFieldProps {
 export function StarField({ maxStars = 100000, magnitudeLimit = 8 }: StarFieldProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const { camera } = useThree();
+  const isPlaying = useSimulationPlaying();
 
   // Generate star data
   const starData = useMemo(() => {
@@ -175,11 +177,17 @@ export function StarField({ maxStars = 100000, magnitudeLimit = 8 }: StarFieldPr
     blending: THREE.AdditiveBlending,
   }), [magnitudeLimit]);
 
-  // Update uniforms
+  // Update uniforms. The star "pulse" (sin(uTime)) is a visual effect driven by
+  // real wall-clock time, so it must freeze when the simulation is paused —
+  // otherwise the canvas never settles frame-to-frame (and Playwright's
+  // screenshot-stability loop would time out). Camera position still updates
+  // so dragging the camera resizes stars even while paused.
   useFrame((state) => {
     if (pointsRef.current) {
       const mat = pointsRef.current.material as THREE.ShaderMaterial;
-      mat.uniforms.uTime.value = state.clock.getElapsedTime();
+      if (isPlaying) {
+        mat.uniforms.uTime.value = state.clock.getElapsedTime();
+      }
       mat.uniforms.uCameraPosition.value.copy(camera.position);
     }
   });

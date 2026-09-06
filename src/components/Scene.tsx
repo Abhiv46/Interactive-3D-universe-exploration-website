@@ -3,7 +3,6 @@ import { EffectComposer, Bloom, FXAA, Vignette } from '@react-three/postprocessi
 import { OrbitControls } from '@react-three/drei'
 import { Sun } from './SolarSystem/Sun'
 import { Planet } from './Planet'
-import { TimeControlUI } from './TimeControlUI'
 import { AsteroidBelt } from './AsteroidBelt'
 import { KuiperBelt } from './KuiperBelt'
 import { StarFieldWrapper } from './StarField'
@@ -40,7 +39,11 @@ function SceneContent() {
   const { trueScale } = useScale();
   const { registerCamera, registerControls, registerBodies } = useCameraControls();
   const registerAllBodies = useRegisterBodies();
-  const { registerRenderer, registerScene } = useRenderState();
+  // RenderState camera registrar must reach the screenshot hook too. Aliased
+  // because `registerCamera` above is the camera-CONTROLS registrar (line 90
+  // feeds both; before this the RenderState camera was never set and every
+  // screenshot failed the "camera not available" guard).
+  const { registerRenderer, registerScene, registerCamera: registerRenderStateCamera } = useRenderState();
   const { showConstellations, starMagnitudeLimit } = useStarFieldControls();
   const { settings } = useSettings();
   const { effectiveSettings } = useLowPerformanceMode();
@@ -48,9 +51,6 @@ function SceneContent() {
   const timeScale = useTimeSpeed();
   const isRunning = useSimulationPlaying();
   const { onCanvasReady } = useLoading();
-
-  // Log when SceneContent renders
-  console.log('[SceneContent] Rendering (outside Canvas)');
 
   // Expose julianDate for debugging
   useEffect(() => {
@@ -73,11 +73,20 @@ function SceneContent() {
   return (
     <>
       {/* Main 3D Scene Canvas */}
+      {/* Default camera: ~1500 units out on +Z with a slight rise. The Sun's
+          ~28-unit visible ball is clearly centered (about 2° on screen, plus
+          bloom glow) while the inner system stays in frame — Mercury orbits at
+          ~770 units, so it is never cut off at this distance. */}
       <Canvas
-        camera={{ position: [0, 3000, 8000], fov: 50 }}
+        camera={{ position: [0, 120, 1500], fov: 50 }}
+        // Freeze rendering entirely when the simulation is paused: R3F stops
+        // re-rendering the (frozen) scene, so the canvas drawing buffer settles
+        // and Playwright's screenshot-stability checks stop seeing per-frame
+        // differences from a live render loop. OrbitControls still invalidate
+        // on interaction, so the user keeps full camera control while paused.
+        frameloop={isRunning ? 'always' : 'demand'}
         style={{ width: '100%', height: '100%', outline: 'none' }}
         onCreated={({ gl, camera, scene }) => {
-          console.log('[Scene] Canvas onCreated - renderer, camera, scene ready');
           gl.setClearColor(0x000000, 1)
           gl.toneMapping = THREE.ACESFilmicToneMapping
           gl.toneMappingExposure = settings.toneMappingExposure
@@ -85,13 +94,13 @@ function SceneContent() {
           // Enable logarithmic depth buffer on the renderer (type assertion for TS)
           (gl as any).logarithmicDepthBuffer = true
           registerCamera(camera);
+          registerRenderStateCamera(camera);
           registerRenderer(gl);
           registerScene(scene);
           // Expose to window for testing/debugging
           if (typeof window !== 'undefined') {
             window.__THREE__ = { scene, camera, gl, THREE };
           }
-          console.log('[Scene] RenderStateContext registered');
         }}
       >
         {/* GalaxyCameraProvider MUST be inside Canvas to use useThree() hook */}
@@ -108,8 +117,8 @@ function SceneContent() {
           />
         </GalaxyCameraProvider>
       </Canvas>
-      {/* Time Control UI Overlay - MUST be outside Canvas (renders HTML, not Three.js objects) */}
-      <TimeControlUI />
+      {/* Time Control UI is rendered once, inside UIOverlay — do NOT render it
+          here too, or two identical fixed panels stack at the bottom-left. */}
     </>
   );
 }

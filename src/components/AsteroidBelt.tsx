@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, ASTEROID_COUNT, AU_TO_VISUAL } from '@/engine/Constants';
 import { useScale } from '@/context/ScaleContext';
+import { useSimulationPlaying } from '@/hooks/useSimulationClock';
 
 /**
  * Asteroid Belt component using InstancedMesh for performance
@@ -11,6 +12,7 @@ import { useScale } from '@/context/ScaleContext';
 export function AsteroidBelt() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const { trueScale } = useScale();
+  const isPlaying = useSimulationPlaying();
 
   // Positions are computed in meters; convert to scene units unless in true-scale mode
   const posScale = trueScale ? 1 : AU_TO_VISUAL;
@@ -116,10 +118,12 @@ export function AsteroidBelt() {
     mesh.computeBoundingSphere();
   }, [instanceData, trueScale, posScale]);
 
-  // Animation - orbit the asteroids
+  // Animation - orbit the asteroids. Driven by wall-clock time, so it must
+  // freeze when the simulation is paused (pause halts the whole scene).
   useFrame((state, delta) => {
     const mesh = meshRef.current;
     if (!mesh) return;
+    if (!isPlaying) return;
 
     const time = state.clock.getElapsedTime();
     const { positions } = instanceData;

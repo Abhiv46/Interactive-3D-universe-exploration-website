@@ -11,6 +11,7 @@ import {
 import { useScale } from '@/context/ScaleContext';
 import { useCameraControls } from '@/hooks/useCameraControls';
 import { useLoading } from '@/components/UI/LoadingScreen';
+import { useSimulationPlaying } from '@/hooks/useSimulationClock';
 
 interface MilkyWayProps {
   /** Whether the galaxy is visible (controlled by camera distance) */
@@ -30,6 +31,7 @@ export function MilkyWay({ visible = true, opacity = 1, quality = 'high' }: Milk
   const { trueScale } = useScale();
   const { cameraPosition } = useCameraControls();
   const { onShaderLoad } = useLoading();
+  const isPlaying = useSimulationPlaying();
   const galaxyRef = useRef<THREE.Group | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const bulgeRef = useRef<THREE.Points | null>(null);
@@ -376,14 +378,18 @@ export function MilkyWay({ visible = true, opacity = 1, quality = 'high' }: Milk
     };
   }, [visible, galaxyGroup, scene]);
 
-  // Animation loop - update time uniform and slow rotation
+  // Animation loop - update time uniform and slow rotation.
+  // The shader time and rotation are driven by wall-clock time; they must
+  // freeze when the simulation is paused (pause = the whole scene stops), or
+  // the canvas keeps changing frame-to-frame and screenshot stability checks
+  // would time out. Camera position still updates for drag-camera re-lighting.
   useFrame((state, delta) => {
     if (!visible) return;
 
     const time = state.clock.getElapsedTime();
 
     // Update shader time
-    if (armMaterial.uniforms.uTime) {
+    if (armMaterial.uniforms.uTime && isPlaying) {
       armMaterial.uniforms.uTime.value = time;
     }
     if (armMaterial.uniforms.uOpacity) {
@@ -396,7 +402,7 @@ export function MilkyWay({ visible = true, opacity = 1, quality = 'high' }: Milk
     // Slow galaxy rotation (225 million years = 1 rotation)
     // Scale: 1 year = 1 second => 225M seconds per rotation = too slow
     // Use visual rotation: 1 rotation per ~5 minutes
-    if (galaxyRef.current) {
+    if (galaxyRef.current && isPlaying) {
       galaxyRef.current.rotation.z += delta * 0.0005; // Very slow
     }
   });

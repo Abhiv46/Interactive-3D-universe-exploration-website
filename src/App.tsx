@@ -30,11 +30,6 @@ function App() {
     initUserProperties();
   }
 
-  // Log when App mounts
-  useEffect(() => {
-    console.log('[App] App mounted');
-  }, []);
-
   return (
     <I18nProvider defaultLanguage="en">
       <LoadingProvider>

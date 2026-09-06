@@ -162,7 +162,6 @@ export function LoadingScreen({ onComplete, progress: externalProgress, loadedAs
         <button
           className="loading-skip"
           onClick={() => {
-            console.log('[LoadingScreen] Skip clicked - forcing progress to 100%');
             // When skipping, we set progress to 1 but LoadingProvider only completes
             // when canvasReady is true. If canvas isn't ready, we wait for it.
             setProgress(1);
@@ -219,10 +218,17 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     total: 0,
   });
 
-  // Calculate total expected
+  // Calculate total expected. Set-state-in-effect must return the SAME
+  // reference when nothing changed, or the `[expectedAssets]` dep re-runs the
+  // effect with a fresh object forever (re-rendering the whole provider tree
+  // non-stop — disastrous under SwiftShader). Returning `prev` lets React bail
+  // out and terminate the loop.
   useEffect(() => {
-    const total = expectedAssets.textures + expectedAssets.shaders + 1; // starData is separate
-    setExpectedAssets(prev => ({ ...prev, total }));
+    setExpectedAssets(prev => {
+      const total = expectedAssets.textures + expectedAssets.shaders + 1; // starData is separate
+      if (prev.total === total) return prev;
+      return { ...prev, total };
+    });
   }, [expectedAssets]);
 
   // Auto-calculate progress from loaded assets
@@ -241,18 +247,9 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 
     setProgress(calculatedProgress);
 
-    console.log('[Loading] Progress:', {
-      progress: Math.round(calculatedProgress * 100) + '%',
-      textures: `${loadedAssets.textures}/${expectedAssets.textures}`,
-      starData: `${loadedAssets.starData}/${expectedAssets.starData}`,
-      shaders: `${loadedAssets.shaders}/${expectedAssets.shaders}`,
-    });
-
     // Auto-complete when all major assets are loaded AND canvas is ready
     if (calculatedProgress >= 0.95 && isLoading && canvasReady) {
-      console.log('[Loading] All assets loaded and canvas ready, completing...');
       setTimeout(() => {
-        console.log('[Loading] Setting isLoading to false');
         setIsLoading(false);
       }, 300);
     }
@@ -262,7 +259,6 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoading) return;
     const timeout = setTimeout(() => {
-      console.log('[Loading] Timeout reached (30s), forcing completion...');
       setProgress(1);
       setTimeout(() => {
         setIsLoading(false);
@@ -271,14 +267,8 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timeout);
   }, [isLoading]);
 
-  // Log when isLoading changes
-  useEffect(() => {
-    console.log('[LoadingProvider] isLoading changed:', isLoading);
-  }, [isLoading]);
-
   // Track texture loading
   const textureLoadHandler = useCallback((event: any) => {
-    console.log('[Loading] Texture loaded:', event?.target?.src || event);
     setLoadedAssets(prev => ({
       ...prev,
       textures: prev.textures + 1,
@@ -287,7 +277,6 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 
   // Track star data loading
   const starDataLoadHandler = useCallback((count: number) => {
-    console.log('[Loading] Star data loaded:', count);
     setLoadedAssets(prev => ({
       ...prev,
       starData: count,
@@ -304,7 +293,6 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const shaderLoadHandler = useCallback((shaderName: string = 'default') => {
     if (!shaderLoadedRef.current.has(shaderName)) {
       shaderLoadedRef.current.add(shaderName);
-      console.log('[Loading] Shader compiled:', shaderName);
       setLoadedAssets(prev => ({
         ...prev,
         shaders: prev.shaders + 1,
@@ -322,7 +310,6 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 
   // Track canvas ready state
   const canvasReadyHandler = useCallback(() => {
-    console.log('[Loading] Canvas ready');
     setCanvasReady(true);
   }, []);
 

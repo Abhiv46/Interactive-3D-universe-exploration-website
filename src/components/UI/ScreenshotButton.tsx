@@ -27,7 +27,12 @@ export function ScreenshotButton() {
       const dataUrl = await captureScreenshot({
         filename: `universe-explorer-${new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')}`,
         format: 'png',
-        multiplier: 2, // 2x resolution for crisp screenshots
+        // Test seam: the E2E suite runs under headless SwiftShader (software
+        // WebGL), where a full-scene 2× render freezes the main thread for
+        // minutes. A 1× still completes in seconds there, so the suite sets
+        // window.__screenshotMultiplier__ = 1 to verify the capture contract
+        // without the 2× cost. Real users keep 2×. See e2e/interactions.spec.ts.
+        multiplier: (window as { __screenshotMultiplier__?: number }).__screenshotMultiplier__ ?? 2,
       });
 
       if (dataUrl) {

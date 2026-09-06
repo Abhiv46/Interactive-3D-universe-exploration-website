@@ -5,6 +5,7 @@ import { CelestialBodyData } from '../../types/orbitalElements';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 import { createSunMaterial, createCoronaShaderMaterial } from '@/shaders/SunShader';
+import { useSimulationPlaying } from '@/hooks/useSimulationClock';
 
 interface SunProps {
   onClick: (object: {
@@ -22,6 +23,7 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
   const coronaRef = useRef<THREE.Mesh>(null);
   const lightRef = useRef<THREE.PointLight | null>(null);
   const { onTextureLoad, onShaderLoad } = useLoading();
+  const isPlaying = useSimulationPlaying();
 
   // Load sun texture with progress reporting and fallback
   const texture = useSafeTextureLoader('/textures/sun_diffuse.jpg', '#fff5e6');
@@ -101,8 +103,10 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
     };
   }, []);
 
-  // Sun surface and corona animation
+  // Sun surface and corona animation. Freeze when paused so the canvas settles
+  // for screenshot stability checks.
   useFrame((state, delta) => {
+    if (!isPlaying) return;
     if (sunMaterial && sunMaterial.uniforms && sunMaterial.uniforms.uTime) {
       sunMaterial.uniforms.uTime.value = state.clock.getElapsedTime();
     }
@@ -158,6 +162,7 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
 // Solar wind particle effect
 function SolarWindParticles({ radius }: { radius: number }) {
   const pointsRef = useRef<THREE.Points>(null);
+  const isPlaying = useSimulationPlaying();
 
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
@@ -208,6 +213,7 @@ function SolarWindParticles({ radius }: { radius: number }) {
 
   useFrame((_state, delta) => {
     if (!pointsRef.current) return;
+    if (!isPlaying) return;
     const positions = pointsRef.current.geometry.getAttribute('position') as THREE.BufferAttribute;
     const velocities = pointsRef.current.geometry.getAttribute('velocity') as THREE.BufferAttribute;
     const initialPositions = pointsRef.current.geometry.getAttribute('initialPosition') as THREE.BufferAttribute;

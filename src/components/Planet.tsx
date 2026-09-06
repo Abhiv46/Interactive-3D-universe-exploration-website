@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
-import { useJulianDate } from '@/hooks/useSimulationClock';
+import { useJulianDate, useSimulationPlaying } from '@/hooks/useSimulationClock';
 import { Moon } from './Moon';
 import { useScale } from '@/context/ScaleContext';
 import { trackPlanetClick } from '@/lib/analytics';
@@ -61,6 +61,7 @@ export function Planet({
 
   // Get simulation time from clock
   const julianDate = useJulianDate();
+  const isPlaying = useSimulationPlaying();
 
   // Calculate position using Keplerian orbital mechanics (returns physical meters)
   // Convert to visual coordinate system: 1 AU = 2000 visual units (matches camera system)
@@ -90,12 +91,9 @@ export function Planet({
   // For rings, scale the ring radii (multiples of the planet radius) by the same factor
   const ringScale = effectiveTrueScale ? 1 : visualScale;
 
-  // Debug log: verify position and radius are reasonable
-  useEffect(() => {
-    const posVec = new THREE.Vector3(position[0], position[1], position[2]);
-    const distanceFromSun = posVec.length();
-    console.log(`[Planet ${data.name}] distance from Sun: ${distanceFromSun.toFixed(1)} units, displayRadius: ${displayRadius.toFixed(3)} units, trueScale: ${effectiveTrueScale}`);
-  }, [position, data.name, displayRadius, effectiveTrueScale]);
+  // (Debug log that verified position/radius was removed — it re-ran on every
+  // clock tick since `position` is a fresh array each render, flooding the
+  // console ~8×/frame and measurably degrading SwiftShader headless runs.)
 
   // Create orbit line geometry
   const orbitGeometry = useMemo(() => {
@@ -160,8 +158,9 @@ export function Planet({
     }
   }, [onClick, data]);
 
-  // Axial rotation
+  // Axial rotation. Freeze when paused so the canvas settles.
   useFrame((_state, delta) => {
+    if (!isPlaying) return;
     if (rotate && meshRef.current && data.physical.rotationPeriod > 0) {
       const angularSpeed = (2 * Math.PI) / data.physical.rotationPeriod;
       meshRef.current.rotation.y += angularSpeed * delta;

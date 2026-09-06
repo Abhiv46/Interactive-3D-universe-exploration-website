@@ -394,6 +394,10 @@ canvas {
   left: 0;
   margin-bottom: 12px;
   width: 320px;
+  /* Must paint above .time-control-backdrop (z-index 99), which is mounted
+     below it in the same stacking context and previously intercepted every
+     click inside the expanded panel. */
+  z-index: 100;
   background: rgba(10, 10, 20, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
