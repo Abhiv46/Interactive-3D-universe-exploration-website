@@ -146,17 +146,30 @@ export const TRUE_SCALE_FACTOR = 1e-11; // True scale multiplier
 // orbit rendering, and StarField placement).
 export const AU_TO_VISUAL = 2000 / AU;
 
-// Radius exaggeration for planet/moon/sun spheres in visual (enlarged) mode.
-// Radii are inflated 3x over the distance scale so bodies stay legible at
-// typical zoom levels while preserving correct relative size order. The 3x
-// factor also keeps each planet small enough that its moons' orbital radii
-// (which use the true AU_TO_VISUAL distance scale) fall outside the globe.
-export const VISUAL_RADIUS_SCALE = AU_TO_VISUAL * 3;
+// Radius exaggeration for planet/moon spheres in visual (enlarged) mode.
+// Radii are inflated 30x over the distance scale (10x worse than the original
+// 3x) so EVERY body preserves its true relative size ratio while the smallest
+// planet (Mercury) still renders ~1.0 unit — legible at typical zoom levels.
+// Resulting radii: Mercury 0.98, Venus 2.43, Earth 2.56, Mars 1.36, Jupiter
+// 28.0, Saturn 23.4, Uranus 10.2, Neptune 9.9. Each planet stays small enough
+// that its moons' orbital radii (which use the true AU_TO_VISUAL distance
+// scale) fall outside the globe. The Sun is deliberately NOT scaled with this
+// (see SUN_VISUAL_RADIUS_CAP in Scene.tsx) — its true 109:1 ratio to Earth
+// would render ~279 units and dominate the default frame.
+export const VISUAL_RADIUS_SCALE = AU_TO_VISUAL * 30;
 
-// Minimum rendered radius (visual units) for planets in visual mode. Rocky
-// planets (Mercury..Mars, Uranus, Neptune) would otherwise render smaller
-// than a pixel from the default camera; clamp them so they stay visible.
-export const MIN_VISUAL_RADIUS = 1.2;
+// Minimum rendered radius (visual units) for planets in visual mode. Kept only
+// as a safety net against sub-pixel bodies under extreme user zoom-out; at the
+// 30x VISUAL_RADIUS_SCALE every planet already exceeds 0.9 units, so nothing
+// real trips it.
+export const MIN_VISUAL_RADIUS = 0.1;
+
+// Cap for the Sun's rendered radius (visual units) in visual mode. The Sun's
+// radius at the 30x planet scale is ~279 units — far larger than every planet
+// — which would make the Sun blot out the inner system from the default
+// camera. Clamp the photosphere (and its corona / solar-wind particles) to
+// keep the frame balanced while everything else keeps true relative sizes.
+export const SUN_VISUAL_RADIUS_CAP = 30;
 
 // Rendering limits
 export const MAX_RENDER_DISTANCE = 1e22; // ~1 Mpc

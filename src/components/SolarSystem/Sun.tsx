@@ -1,11 +1,13 @@
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { CelestialBodyData } from '../../types/orbitalElements';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
 import { createSunMaterial, createCoronaShaderMaterial } from '@/shaders/SunShader';
 import { useSimulationPlaying } from '@/hooks/useSimulationClock';
+import { useBodySelection } from '@/context/BodySelectionContext';
 
 interface SunProps {
   onClick: (object: {
@@ -16,14 +18,24 @@ interface SunProps {
     data: CelestialBodyData;
   }) => void;
   radius?: number;
+  /** Whether this body may show its in-canvas label (default true) */
+  labelEnabled?: boolean;
 }
 
-export function Sun({ onClick, radius = 5 }: SunProps) {
+export function Sun({ onClick, radius = 5, labelEnabled = true }: SunProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const coronaRef = useRef<THREE.Mesh>(null);
   const lightRef = useRef<THREE.PointLight | null>(null);
   const { onTextureLoad, onShaderLoad } = useLoading();
   const isPlaying = useSimulationPlaying();
+
+  // In-canvas label visibility: hidden by default, shown on hover, on
+  // selection, or when the camera zooms close.
+  const [hovered, setHovered] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
+  const zoomedRef = useRef(false);
+  const { selected } = useBodySelection();
+  const isSelected = selected?.id === 'sun';
 
   // Load sun texture with progress reporting and fallback
   const texture = useSafeTextureLoader('/textures/sun_diffuse.jpg', '#fff5e6');
@@ -117,6 +129,22 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
       coronaRef.current.rotation.y += delta * 0.0001;
       coronaRef.current.rotation.x += delta * 0.00005;
     }
+
+    // Zoom label: reveal when the camera gets within radius * 25.
+    // Three.js OrbitControls zooms via camera.zoom (projection), NOT by
+    // moving camera.position, so we divide by zoom to get effective distance.
+    // The Sun sits at world origin, so distance to the camera is the distance
+    // to the globe.
+    if (labelEnabled) {
+      const cam = state.camera.position;
+      const dist = Math.sqrt(cam.x * cam.x + cam.y * cam.y + cam.z * cam.z);
+      const effectiveDist = dist / (state.camera.zoom || 1);
+      const shouldZoom = effectiveDist < radius * 25;
+      if (shouldZoom !== zoomedRef.current) {
+        zoomedRef.current = shouldZoom;
+        setZoomed(shouldZoom);
+      }
+    }
   });
 
   // Handle click
@@ -140,6 +168,8 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
         material={material}
         scale={[radius, radius, radius]}
         onClick={handleClick}
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
+        onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
         renderOrder={0}
         name="sun"
       />
@@ -152,6 +182,19 @@ export function Sun({ onClick, radius = 5 }: SunProps) {
         scale={[radius, radius, radius]}
         renderOrder={1}
       />
+
+      {/* In-canvas label: hidden by default; shown on hover, selection, or zoom.
+          pointer-events none so it never blocks canvas interaction. */}
+      {labelEnabled && (hovered || isSelected || zoomed) && (
+        <Html
+          position={[0, radius * 1.4, 0]}
+          center
+          zIndexRange={[5, 0]}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className="body-label" data-body-id="sun">Sun</div>
+        </Html>
+      )}
 
       {/* Solar wind particle field (subtle) */}
       <SolarWindParticles radius={radius} />

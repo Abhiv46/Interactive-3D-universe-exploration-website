@@ -8,6 +8,7 @@ import { KuiperBelt } from './KuiperBelt'
 import { StarFieldWrapper } from './StarField'
 import { MilkyWay } from '@/components/MilkyWay'
 import { useScale } from '@/context/ScaleContext'
+import { useBodySelection } from '@/context/BodySelectionContext'
 import { useCameraControls, useRegisterBodies } from '@/hooks/useCameraControls'
 import { useTouchControls } from '@/hooks/useTouchControls'
 import { GalaxyCameraProvider, useGalaxyCameraContext } from '@/hooks/useGalaxyCamera'
@@ -19,7 +20,7 @@ import {
   MOON, IO, EUROPA, GANYMEDE, CALLISTO, TITAN, ENCELADUS
 } from '@/data/planets'
 import { BODIES_MAP } from '@/data/bodiesMap'
-import { SOLAR_RADIUS, VISUAL_RADIUS_SCALE } from '@/engine/Constants'
+import { SOLAR_RADIUS, VISUAL_RADIUS_SCALE, SUN_VISUAL_RADIUS_CAP } from '@/engine/Constants'
 import * as THREE from 'three'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import { useStarFieldControls } from './TimeControlUI'
@@ -144,10 +145,11 @@ function SceneInner({
   settings: any;
 }) {
   const { camera, gl } = useThree();
-  const { registerCamera, registerBodies } = useCameraControls();
+  const { registerCamera, registerBodies, setFocus } = useCameraControls();
   const registerAllBodies = useRegisterBodies();
   const { registerRenderer, registerScene } = useRenderState();
   const { scaleMode, cameraDistance } = useGalaxyCameraContext();
+  const { select } = useBodySelection();
 
   // Determine visibility based on scale mode
   const showSolarSystem = scaleMode === 'solar-system';
@@ -208,8 +210,14 @@ function SceneInner({
       {/* Solar System - visible at solar-system scale */}
       {showSolarSystem && (
         <>
-          {/* Sun at center - radius keeps real 109:1 ratio to Earth's visual radius */}
-          <Sun onClick={() => {}} radius={SOLAR_RADIUS * effectiveVisualScale} />
+          {/* Sun at center — true radius would be ~279 units at default (109× Earth),
+              swamping the inner system. Cap to SUN_VISUAL_RADIUS_CAP (30) scaled by
+              the user's Visual Scale slider so the cap stays proportional. */}
+          <Sun
+            onClick={(obj) => { select(obj.data); setFocus(obj.data); }}
+            labelEnabled={settings.showLabels}
+            radius={Math.min(SOLAR_RADIUS * effectiveVisualScale, SUN_VISUAL_RADIUS_CAP * (visualScaleFactor / 1000))}
+          />
 
           {/* Mercury - closest to Sun */}
           <Planet
@@ -217,6 +225,8 @@ function SceneInner({
             visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* Venus */}
@@ -225,6 +235,8 @@ function SceneInner({
             visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* Earth orbiting Sun with real Keplerian mechanics + Moon */}
@@ -235,6 +247,8 @@ function SceneInner({
             showOrbit={effectiveSettings.showOrbits}
             moons={[MOON]}
             moonVisualScale={effectiveVisualScale}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* ISS Tracker (real-time position) */}
@@ -246,6 +260,8 @@ function SceneInner({
             visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* Jupiter with Galilean moons */}
@@ -256,6 +272,8 @@ function SceneInner({
             showOrbit={effectiveSettings.showOrbits}
             moons={[IO, EUROPA, GANYMEDE, CALLISTO]}
             moonVisualScale={effectiveVisualScale}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* Saturn with rings + Titan and Enceladus */}
@@ -266,6 +284,8 @@ function SceneInner({
             showOrbit={effectiveSettings.showOrbits}
             moons={[TITAN, ENCELADUS]}
             moonVisualScale={effectiveVisualScale}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* Uranus with rings */}
@@ -274,6 +294,8 @@ function SceneInner({
             visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* Neptune with rings */}
@@ -282,6 +304,8 @@ function SceneInner({
             visualScale={effectiveVisualScale}
             trueScale={trueScale}
             showOrbit={effectiveSettings.showOrbits}
+            onClick={(data) => { select(data); setFocus(data); }}
+            labelEnabled={settings.showLabels}
           />
 
           {/* Asteroid Belt between Mars and Jupiter */}

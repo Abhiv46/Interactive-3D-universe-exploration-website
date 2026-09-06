@@ -4,12 +4,12 @@ import { pauseSimulation, waitForAppReady } from './helpers';
 /**
  * Visual regression baseline of the default view.
  *
- * NOTE on tolerance: the generated background stars (20k of them) are laid out
- * with Math.random() on every load, and the Sun's corona is animated, so a
- * pixel-exact baseline would flake. These screenshots therefore act as a COARSE
- * net — they catch a black/blown-out canvas, a missing UI chrome, or a broken
- * layout, while tolerating starfield noise. Phase 2 replaces the random star
- * field with a deterministic Hipparcos catalog, which lets us tighten this.
+ * The night sky is now a deterministic Hipparcos catalog (static JSON, no
+ * Math.random), and the Sun's corona is frozen while the simulation is paused
+ * (see pauseSimulation), so the scene is pixel-stable. The tolerance is tight
+ * but not pixel-exact to still absorb the tiny sub-pixel text/AA differences
+ * that differ across Chromium builds — while still catching a black/blown-out
+ * canvas, missing UI chrome, or a broken layout.
  *
  * HEADLESS SWIFTSHADER NOTE: the WebGL canvas renders black in headless
  * Chrome (SwiftShader doesn't composite the EffectComposer pipeline), so the
@@ -29,7 +29,7 @@ test.describe('visual regression', () => {
     await page.waitForTimeout(2_000);
 
     await expect(page).toHaveScreenshot('default-view.png', {
-      maxDiffPixelRatio: 0.20,
+      maxDiffPixelRatio: 0.05,
       maxDiffPixels: 10_000,
       animations: 'disabled',
       timeout: 30_000,

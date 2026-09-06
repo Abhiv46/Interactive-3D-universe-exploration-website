@@ -20,6 +20,7 @@ import { useState } from 'react';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useCameraControls } from '@/hooks/useCameraControls';
+import { useBodySelection } from '@/context/BodySelectionContext';
 import { SurfaceZoomProvider, useSurfaceZoomContext } from '@/context/SurfaceZoomContext';
 import { EclipseIndicator } from './SolarSystem/EclipseVisualizer';
 import { ISSTracker, ISSInfoPanel, useISSTracker } from './SolarSystem/ISSTracker';
@@ -30,7 +31,7 @@ import { useSettings } from '@/context/SettingsContext';
 
 function UIOverlayContent() {
   const { settings } = useSettings();
-  const [selectedBody, setSelectedBody] = useState<CelestialBodyData | null>(null);
+  const { selected: selectedBody, select, clear } = useBodySelection();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { showToast } = useToast();
   const { setFocus, getBodyPosition } = useCameraControls();
@@ -43,12 +44,12 @@ function UIOverlayContent() {
   const infoCardRef = useFocusTrap(!!selectedBody);
 
   const handleSelectBody = (body: { id: string; name: string; type: string; position: THREE.Vector3; data: CelestialBodyData }) => {
-    setSelectedBody(body.data);
+    select(body.data);
     setFocus(body.data);
   };
 
   const handleCloseInfoCard = () => {
-    setSelectedBody(null);
+    clear();
     setFocus(null);
   };
 

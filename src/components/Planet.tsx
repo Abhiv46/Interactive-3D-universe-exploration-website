@@ -1,11 +1,13 @@
-import { useRef, useMemo, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useEffect, useCallback, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { CelestialBodyData } from '@/types/orbitalElements';
 import { useKeplerianOrbit, useOrbitPath } from '@/hooks/useKeplerianOrbit';
 import { useJulianDate, useSimulationPlaying } from '@/hooks/useSimulationClock';
 import { Moon } from './Moon';
 import { useScale } from '@/context/ScaleContext';
+import { useBodySelection } from '@/context/BodySelectionContext';
 import { trackPlanetClick } from '@/lib/analytics';
 import { useLoading } from '@/components/UI/LoadingScreen';
 import { useSafeTextureLoader } from '@/hooks/useTextureLoader';
@@ -37,6 +39,8 @@ interface PlanetProps {
   moons?: CelestialBodyData[];
   /** Visual scale for moons */
   moonVisualScale?: number;
+  /** Whether this body may show its in-canvas label (default true) */
+  labelEnabled?: boolean;
 }
 
 export function Planet({
@@ -50,11 +54,20 @@ export function Planet({
   onClick,
   moons = [],
   moonVisualScale = VISUAL_RADIUS_SCALE,
+  labelEnabled = true,
 }: PlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const ringRefs = useRef<THREE.Mesh[]>([]);
   const { trueScale: contextTrueScale } = useScale();
   const { onTextureLoad, onShaderLoad } = useLoading();
+
+  // In-canvas label visibility: hidden by default, shown on hover, on
+  // selection (clicked / searched), or when the camera zooms close.
+  const [hovered, setHovered] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
+  const zoomedRef = useRef(false);
+  const { selected } = useBodySelection();
+  const isSelected = selected?.id === data.id;
 
   // Use context trueScale if not explicitly overridden
   const effectiveTrueScale = trueScale ?? contextTrueScale;
@@ -158,8 +171,10 @@ export function Planet({
     }
   }, [onClick, data]);
 
-  // Axial rotation. Freeze when paused so the canvas settles.
-  useFrame((_state, delta) => {
+  // Axial rotation + zoom-label detection. Freeze when paused so the canvas
+  // settles. Zoom state updates ONLY on threshold crossings (enter/leave), so
+  // a re-render happens at most twice per approach, never every frame.
+  useFrame((state, delta) => {
     if (!isPlaying) return;
     if (rotate && meshRef.current && data.physical.rotationPeriod > 0) {
       const angularSpeed = (2 * Math.PI) / data.physical.rotationPeriod;
@@ -172,6 +187,25 @@ export function Planet({
       ringRefs.current.forEach(ring => {
         if (ring) ring.rotation.y += angularSpeed * delta;
       });
+    }
+
+    // Zoom label: reveal when the camera gets within displayRadius * 25.
+    // Three.js OrbitControls zooms via camera.zoom (projection), NOT by
+    // moving camera.position, so we divide by zoom to get the effective
+    // visual distance. The planet's <group> sits at `position`, so distance
+    // to that is the distance to the globe.
+    if (labelEnabled) {
+      const cam = state.camera.position;
+      const dx = cam.x - position[0];
+      const dy = cam.y - position[1];
+      const dz = cam.z - position[2];
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const effectiveDist = dist / (state.camera.zoom || 1);
+      const shouldZoom = effectiveDist < displayRadius * 25;
+      if (shouldZoom !== zoomedRef.current) {
+        zoomedRef.current = shouldZoom;
+        setZoomed(shouldZoom);
+      }
     }
   });
 
@@ -376,8 +410,23 @@ export function Planet({
         castShadow
         receiveShadow
         onClick={(e) => { e.stopPropagation(); handlePlanetClick(); }}
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
+        onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
         name={data.id}
       />
+
+      {/* In-canvas label: hidden by default; shown on hover, selection, or zoom.
+          pointer-events none so it never blocks canvas interaction. */}
+      {labelEnabled && (hovered || isSelected || zoomed) && (
+        <Html
+          position={[0, displayRadius * 1.4, 0]}
+          center
+          zIndexRange={[5, 0]}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className="body-label" data-body-id={data.id}>{data.name}</div>
+        </Html>
+      )}
 
       {/* Fresnel atmosphere glow - BackSide sphere with additive blending */}
       {atmosphere && (

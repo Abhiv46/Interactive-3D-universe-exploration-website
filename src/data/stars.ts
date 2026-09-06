@@ -9,6 +9,7 @@
 
 import { StarData } from '@/types/orbitalElements';
 import { DEG_TO_RAD, RAD_TO_DEG } from '@/engine/Constants';
+import HIPPARCOS_CATALOG from './hipparcos.catalog.json';
 
 /**
  * Convert B-V color index to RGB color (blackbody approximation)
@@ -793,8 +794,12 @@ export const BRIGHT_STARS: StarData[] = [
   },
 ];
 
-// Generate additional stars programmatically for a richer field
-// In production, load full Hipparcos catalog from JSON/CSV
+// DEPRECATED — kept only because the unused duplicate component
+// src/components/Stars/StarField.tsx (reachable only from the equally-unused
+// src/components/UniverseScene.tsx) still imports it. The LIVE star pipeline
+// (StarField.tsx -> getStarCatalog) no longer calls this: it uses the
+// deterministic HIPPARCOS_CATALOG instead, so Math.random() never runs in the
+// rendered night sky and the field is screenshot-stable.
 export function generateAdditionalStars(count: number = 20000): StarData[] {
   const stars: StarData[] = [];
   const constellations = [
@@ -884,31 +889,28 @@ function bvToTemperature(bv: number): number {
 }
 
 /**
- * Full star catalog (lazy loaded)
- * In production, this would be loaded from a JSON file or binary format
+ * Deterministic full night-sky catalog: the hand-curated bright stars plus the
+ * real ~9k-star Hipparcos/HYG catalog (committed static JSON). The two are
+ * deduplicated by Hipparcos id so a bright star never renders twice.
+ *
+ * Built once and cached; available synchronously from the first frame, so the
+ * full field is present immediately (no async "generate" step, no Math.random).
  */
-let fullCatalog: StarData[] | null = null;
+const BRIGHT_HIP_IDS = new Set<number>(BRIGHT_STARS.map((s) => s.hipId));
+
+const FULL_STAR_CATALOG: StarData[] = [
+  ...BRIGHT_STARS,
+  ...HIPPARCOS_CATALOG.filter((s) => !BRIGHT_HIP_IDS.has(s.hipId)),
+];
 
 export async function loadFullStarCatalog(): Promise<StarData[]> {
-  if (fullCatalog) return fullCatalog;
-
-  // Start with bright stars
-  fullCatalog = [...BRIGHT_STARS];
-
-  // Add generated stars for now
-  // In production: load from '/data/hipparcos.json' or similar
-  const additional = generateAdditionalStars(20000);
-  fullCatalog.push(...additional);
-
-  return fullCatalog;
+  // Kept async for API compatibility with callers (StarFieldWrapper, index.ts);
+  // the catalog is already fully built above, so this resolves immediately.
+  return FULL_STAR_CATALOG;
 }
 
 export function getStarCatalog(): StarData[] {
-  if (!fullCatalog) {
-    // Return bright stars synchronously, full catalog async
-    return BRIGHT_STARS;
-  }
-  return fullCatalog;
+  return FULL_STAR_CATALOG;
 }
 
 // Brightest stars by constellation (for labels)

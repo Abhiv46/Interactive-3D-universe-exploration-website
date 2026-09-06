@@ -7,6 +7,7 @@ import { ScaleProvider, useScale } from '@/context/ScaleContext'
 import { CameraControlsProvider } from '@/hooks/useCameraControls'
 import { SettingsProvider, useSettings } from '@/context/SettingsContext'
 import { StarFieldControlsProvider } from './components/TimeControlUI'
+import { BodySelectionProvider } from '@/context/BodySelectionContext'
 import { useEffect } from 'react'
 
 // Bridges the SettingsContext (powered by the Settings panel) into the
@@ -38,12 +39,14 @@ function App() {
             {/* ScaleSync must sit inside BOTH providers to read settings -> write scale */}
             <ScaleSync />
             <CameraControlsProvider>
-              <StarFieldControlsProvider>
-                <RenderStateProvider>
-                  <Scene />
-                  <UIOverlay />
-                </RenderStateProvider>
-              </StarFieldControlsProvider>
+              <BodySelectionProvider>
+                <StarFieldControlsProvider>
+                  <RenderStateProvider>
+                    <Scene />
+                    <UIOverlay />
+                  </RenderStateProvider>
+                </StarFieldControlsProvider>
+              </BodySelectionProvider>
             </CameraControlsProvider>
           </ScaleProvider>
         </SettingsProvider>

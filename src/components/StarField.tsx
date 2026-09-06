@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
-import { useThree, useFrame } from '@react-three/fiber';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { BRIGHT_STARS, generateAdditionalStars, bvToColor, magnitudeToPointSize, filterStarsByMagnitude, getStarCatalog, loadFullStarCatalog } from '@/data/stars';
+import { bvToColor, magnitudeToPointSize, filterStarsByMagnitude, getStarCatalog, loadFullStarCatalog } from '@/data/stars';
 import { CONSTELLATIONS, Constellation, ConstellationLine } from '@/data/constellations';
 import { DEG_TO_RAD } from '@/engine/Constants';
 import { useLoading } from '@/components/UI/LoadingScreen';
@@ -209,7 +209,12 @@ export function StarField({
 }
 
 /**
- * StarFieldWrapper - loads full catalog async and manages LOD
+ * StarFieldWrapper - renders the full deterministic night-sky field.
+ *
+ * The Hipparcos catalog is now a static import, so the full field (up to
+ * maxStars, magnitude-limited) is available synchronously on the first frame —
+ * no async "catalog ready" tier swap. onStarDataLoad still reports the total
+ * count so the loading screen can display it.
  */
 export function StarFieldWrapper({
   distance = 1e6,
@@ -217,26 +222,23 @@ export function StarFieldWrapper({
   maxStars = 20000,
   showConstellations = false,
 }: StarFieldProps) {
-  const [catalogReady, setCatalogReady] = useState(false);
   const { onStarDataLoad } = useLoading();
 
   useEffect(() => {
-    // Load full catalog async with progress reporting
     loadFullStarCatalog().then((catalog) => {
-      setCatalogReady(true);
-      // Report total star count loaded
+      // Report total star count loaded (catalog is synchronous, so this just
+      // feeds the loading-screen counter).
       if (onStarDataLoad) {
         onStarDataLoad(catalog.length);
       }
     });
   }, [onStarDataLoad]);
 
-  // For now, render with initial catalog, upgrade when ready
   return (
     <StarField
       distance={distance}
-      maxMagnitude={catalogReady ? maxMagnitude : 4.0} // Brighter stars initially
-      maxStars={catalogReady ? maxStars : 300}
+      maxMagnitude={maxMagnitude}
+      maxStars={maxStars}
       showConstellations={showConstellations}
     />
   );

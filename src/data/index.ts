@@ -43,7 +43,7 @@ async function buildSearchCatalog(): Promise<SearchResult[]> {
   // Import dynamically to avoid circular dependencies
   const { PLANET_LOOKUP } = await import('./planets');
   const { MOONS_BY_ID } = await import('./moons');
-  const { BRIGHT_STARS, getStarCatalog } = await import('./stars');
+  const { getStarCatalog } = await import('./stars');
   const { NOTABLE_ASTEROIDS, NOTABLE_KBO, JUPITER_TROJANS } = await import('./asteroids');
   const { NOTABLE_COMETS } = await import('./comets');
   const { CONSTELLATIONS } = await import('./constellations');
@@ -61,8 +61,8 @@ async function buildSearchCatalog(): Promise<SearchResult[]> {
     catalog.push({ id: body.id, name: body.name, type: body.type });
   });
 
-  // Add stars
-  const allStars = [...BRIGHT_STARS, ...getStarCatalog()];
+  // Add stars (getStarCatalog already includes the hand-curated BRIGHT_STARS)
+  const allStars = getStarCatalog();
   allStars.forEach((body: any) => {
     catalog.push({ id: body.hipId.toString(), name: body.properName || body.bayer || body.flamsteed || `HIP ${body.hipId}`, type: 'star', distance: body.distance });
   });
@@ -140,7 +140,7 @@ export async function getObjectById(id: string): Promise<any> {
   // Import dynamically to avoid circular dependencies
   const { PLANET_LOOKUP } = await import('./planets');
   const { MOONS_BY_ID } = await import('./moons');
-  const { BRIGHT_STARS, getStarCatalog } = await import('./stars');
+  const { getStarCatalog } = await import('./stars');
   const { NOTABLE_ASTEROIDS, NOTABLE_KBO, JUPITER_TROJANS } = await import('./asteroids');
   const { NOTABLE_COMETS } = await import('./comets');
   const { CONSTELLATIONS } = await import('./constellations');
@@ -150,8 +150,8 @@ export async function getObjectById(id: string): Promise<any> {
   if (PLANET_LOOKUP[id]) return PLANET_LOOKUP[id];
   if (MOONS_BY_ID?.[id]) return MOONS_BY_ID[id];
 
-  // Check stars
-  const allStars = [...BRIGHT_STARS, ...getStarCatalog()];
+  // Check stars (getStarCatalog already includes BRIGHT_STARS)
+  const allStars = getStarCatalog();
   const star = allStars.find((s: any) => s.hipId.toString() === id || s.properName?.toLowerCase() === id.toLowerCase());
   if (star) return star;
 
