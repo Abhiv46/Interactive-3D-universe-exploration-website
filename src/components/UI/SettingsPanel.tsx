@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useTimeSpeed, useSimulationControls, TimeSpeed } from '../../hooks/useSimulationClock';
 import { useAudioEngine } from '../../hooks/useAudioEngine';
 import { useSettings } from '@/context/SettingsContext';
+import { useIntro } from '@/context/IntroContext';
 import { useFocusTrap, generateId } from '@/hooks/useAccessibility';
 import { trackEvent, ANALYTICS_EVENTS, trackSettingsChange } from '@/lib/analytics';
 
 export function SettingsPanel() {
   const { settings, setSettings, resetToDefaults } = useSettings();
+  const { hasCompleted, restartIntro } = useIntro();
   const [isOpen, setIsOpen] = useState(false);
   const timeSpeed = useTimeSpeed();  // Returns primitive - stable reference
   const clockControls = useSimulationControls();  // Returns stable controls object
@@ -157,6 +159,19 @@ export function SettingsPanel() {
             hidden={activeTab !== 'display'}
           >
             <div className="setting-group">
+              <h3>Cinematic Intro</h3>
+              {hasCompleted && (
+                <button
+                  className="glass-btn secondary"
+                  onClick={() => {
+                    restartIntro();
+                    trackEvent(ANALYTICS_EVENTS.SETTINGS_OPENED, { action: 'rewatch_intro' });
+                  }}
+                  style={{ width: '100%', marginBottom: '16px', padding: '12px 16px', fontSize: '14px' }}
+                >
+                  🎬 Re-watch Intro
+                </button>
+              )}
               <h3>Celestial Objects</h3>
               <label className="setting-toggle">
                 <input

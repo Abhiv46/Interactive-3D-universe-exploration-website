@@ -31,6 +31,9 @@ export const ANALYTICS_EVENTS = {
   ECLIPSE_VIEWED: 'eclipse_viewed',
   ISS_TRACKED: 'iss_tracked',
   AURORA_VIEWED: 'aurora_viewed',
+  INTRO_WATCHED: 'intro_watched',
+  INTRO_SKIPPED: 'intro_skipped',
+  INTRO_REWATCHED: 'intro_rewatched',
 
   // Feedback
   FEEDBACK_OPENED: 'feedback_opened',

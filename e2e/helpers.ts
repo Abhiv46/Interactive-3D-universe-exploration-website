@@ -67,10 +67,29 @@ export function expectNoErrors(snapshot: () => CapturedError[]): void {
  *  2. the WebGL scene is registered on window.__THREE__
  *  3. the canvas has been rendered for a moment
  *
+ * By default the test runs as a "returning user" (the intro-completed flag is
+ * seeded before load), so the cinematic intro never plays and the 20 pre-existing
+ * tests keep their pre-Phase-3 behavior. Tests that specifically exercise the
+ * intro pass `{ seedIntroCompleted: false }` and manage localStorage themselves.
+ *
  * `waitForAppReady` returns the persisted `errors()` snapshot handle so a test
  * can keep gathering errors across the whole test and assert at the end.
  */
-export async function waitForAppReady(page: Page): Promise<() => CapturedError[]> {
+export async function waitForAppReady(page: Page, opts: { seedIntroCompleted?: boolean } = {}): Promise<() => CapturedError[]> {
+  const { seedIntroCompleted = true } = opts;
+
+  if (seedIntroCompleted) {
+    // Fast-path: seed the persisted flag so IntroProvider initializes to
+    // phase 'complete' and IntroSequence renders nothing.
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('universe-explorer-intro-completed', 'true');
+      } catch {
+        /* localStorage unavailable — treat as a fresh visit; the suite will still pass, just slower */
+      }
+    });
+  }
+
   const errors = watchErrors(page);
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -113,6 +132,26 @@ export async function waitForAppReady(page: Page): Promise<() => CapturedError[]
   await page.waitForTimeout(2_500);
 
   return errors;
+}
+
+/**
+ * Wait for the SCENE to be live on the CURRENT page without re-navigating.
+ * Used by intro tests: the intro must still be assertable in the meantime, and
+ * waitForAppReady's page.goto() would discard the intro state. Waits for the
+ * loading overlay to detach (assets done), the scene to expose __THREE__, and a
+ * short settle for bloom/orbit damping.
+ */
+export async function waitSceneReady(page: Page): Promise<void> {
+  await page
+    .locator('.loading-screen')
+    .waitFor({ state: 'detached', timeout: 60_000 })
+    .catch(() => {});
+  await page.waitForFunction(
+    () => !!((window as any).__THREE__?.scene && (window as any).__THREE__?.gl),
+    undefined,
+    { timeout: 120_000 },
+  );
+  await page.waitForTimeout(1_500);
 }
 
 /** All mesh names currently present in the Three.js scene. */

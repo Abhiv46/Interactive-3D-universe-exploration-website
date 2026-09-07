@@ -8,6 +8,8 @@ import { CameraControlsProvider } from '@/hooks/useCameraControls'
 import { SettingsProvider, useSettings } from '@/context/SettingsContext'
 import { StarFieldControlsProvider } from './components/TimeControlUI'
 import { BodySelectionProvider } from '@/context/BodySelectionContext'
+import { IntroProvider } from '@/context/IntroContext'
+import { IntroSequence } from './components/IntroSequence'
 import { useEffect } from 'react'
 
 // Bridges the SettingsContext (powered by the Settings panel) into the
@@ -32,26 +34,31 @@ function App() {
   }
 
   return (
-    <I18nProvider defaultLanguage="en">
-      <LoadingProvider>
-        <SettingsProvider>
-          <ScaleProvider>
-            {/* ScaleSync must sit inside BOTH providers to read settings -> write scale */}
-            <ScaleSync />
-            <CameraControlsProvider>
-              <BodySelectionProvider>
-                <StarFieldControlsProvider>
-                  <RenderStateProvider>
-                    <Scene />
-                    <UIOverlay />
-                  </RenderStateProvider>
-                </StarFieldControlsProvider>
-              </BodySelectionProvider>
-            </CameraControlsProvider>
-          </ScaleProvider>
-        </SettingsProvider>
-      </LoadingProvider>
-    </I18nProvider>
+    <IntroProvider>
+      <I18nProvider defaultLanguage="en">
+        <LoadingProvider>
+          <SettingsProvider>
+            <ScaleProvider>
+              {/* ScaleSync must sit inside BOTH providers to read settings -> write scale */}
+              <ScaleSync />
+              <CameraControlsProvider>
+                <BodySelectionProvider>
+                  <StarFieldControlsProvider>
+                    <RenderStateProvider>
+                      <Scene />
+                      <UIOverlay />
+                    </RenderStateProvider>
+                  </StarFieldControlsProvider>
+                </BodySelectionProvider>
+              </CameraControlsProvider>
+            </ScaleProvider>
+          </SettingsProvider>
+        </LoadingProvider>
+      </I18nProvider>
+
+      {/* Intro sequence renders in its own Canvas overlay when phase !== 'complete' */}
+      <IntroSequence />
+    </IntroProvider>
   )
 }
 

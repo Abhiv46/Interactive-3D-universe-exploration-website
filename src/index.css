@@ -2108,3 +2108,162 @@ button {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   INTRO SEQUENCE STYLES
+   (moved here from styles/globals.css, which is not imported — index.css is
+   the app's only live stylesheet. Tokens resolved to their literal values.)
+   ========================================================================== */
+
+.intro-sequence {
+  position: fixed;
+  inset: 0;
+  /* Must paint above the loading screen (z-index 1000) so the intro is what the
+     user sees during first-visit asset loading — and above all so the Skip
+     button (nested in this stacking context) is never intercepted by the
+     loading screen's pointer events. Kept below Toasts (z-index 1100). */
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+/* Skip Intro Button */
+.skip-intro-button {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1001;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #e8e8f0;
+  background: rgba(15, 15, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(120, 120, 160, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.skip-intro-button:hover {
+  background: rgba(25, 25, 40, 0.9);
+  border-color: rgba(160, 160, 200, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+}
+
+.skip-intro-button:focus-visible {
+  outline: none;
+  border-color: #00d4aa;
+  box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.4), 0 16px 64px rgba(0, 0, 0, 0.6);
+}
+
+.skip-intro-icon {
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.skip-intro-text {
+  font-size: 13px;
+}
+
+/* Intro Progress Bar */
+.intro-progress {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 1002;
+  overflow: hidden;
+}
+
+.intro-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4aa 0%, #0088ff 100%);
+  box-shadow: 0 0 12px rgba(0, 212, 170, 0.4);
+  transition: width 160ms ease-out;
+  border-radius: 0 0 16px 16px;
+}
+
+/* Phase Label */
+.intro-phase-label {
+  position: fixed;
+  bottom: calc(16px + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1002;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #a0a0b8;
+  background: rgba(10, 10, 20, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(100, 100, 140, 0.15);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  animation: fadeIn 250ms ease-out;
+}
+
+/* Reduced-motion intro: static frame, no WebGL canvas */
+.intro-reduced-motion {
+  background: radial-gradient(ellipse at center, #0a1030 0%, #020306 70%);
+}
+
+.intro-reduced-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 210, 130, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(80, 120, 255, 0.08) 0%, transparent 70%);
+}
+
+/* Reduced motion for intro */
+@media (prefers-reduced-motion: reduce) {
+  .intro-progress-fill {
+    transition: none;
+  }
+
+  .intro-phase-label {
+    animation: none;
+  }
+
+  .skip-intro-button {
+    transition: none;
+  }
+}
+
+/* Mobile adjustments for intro */
+@media (max-width: 768px) {
+  .skip-intro-button {
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: calc(16px + env(safe-area-inset-right, 0px));
+    padding: 12px 20px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .skip-intro-text {
+    display: none;
+  }
+
+  .intro-phase-label {
+    bottom: calc(16px + 12px + env(safe-area-inset-bottom, 0px));
+    font-size: 13px;
+    padding: 10px 16px;
+  }
+}
