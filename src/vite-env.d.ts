@@ -21,6 +21,8 @@ interface Window {
     camera: THREE.Camera;
     gl: THREE.WebGLRenderer;
     THREE: any;
+    /** Test seam: trigger a real animated fly-to by body id (set in Scene.tsx onCreated). */
+    flyTo?: (bodyId: string, duration?: number) => void;
   };
   __galaxyCamera?: any;
   __julianDate__?: number;

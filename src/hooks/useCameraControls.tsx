@@ -135,6 +135,12 @@ export function CameraControlsProvider({ children }: CameraControlsProviderProps
       controls.target.lerpVectors(startTarget, endTarget, eased);
       camera.position.lerpVectors(startPosition, endPosition, eased);
 
+      // Keep the camera-controller damping state in sync and fire a 'change'
+      // event. That change triggers gl.invalidate(), so a fly-to still renders
+      // frame-by-frame even when the simulation is paused (frameloop 'demand'),
+      // instead of freezing with a motionless camera.
+      controls.update();
+
       if (progress < 1) {
         requestAnimationFrame(animate);
       }

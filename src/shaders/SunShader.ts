@@ -101,10 +101,13 @@ export const sunFragmentShader = `
     vec4 texColor = texture2D(uTexture, vUv);
     vec3 baseColor = texColor.rgb * uSunColor;
 
-    // Add procedural granules
-    float granules = snoise(vWorldPosition * 0.00005 + uTime * 0.0005);
-    float granuleDetail = snoise(vWorldPosition * 0.0002 + uTime * 0.002) * 0.3;
-    baseColor *= 1.0 + (granules + granuleDetail) * 0.15;
+    // Add procedural granules (animated convection cells). Three octaves moving
+    // at increasing speeds so the surface visibly "boils" rather than sitting
+    // static behind a faint shimmer.
+    float granules = snoise(vWorldPosition * 0.00005 + uTime * 0.0015);
+    float granuleDetail = snoise(vWorldPosition * 0.0002 + uTime * 0.006) * 0.3;
+    float granuleBoil = snoise(vWorldPosition * 0.0009 + uTime * 0.02) * 0.25;
+    baseColor *= 1.0 + (granules * 0.16 + granuleDetail + granuleBoil) * 0.9;
 
     // Sunspots (darker, cooler regions)
     float sunspots = snoise(vWorldPosition * 0.000008 - uTime * 0.0001);
@@ -139,7 +142,7 @@ export function createSunMaterial(texture: THREE.Texture | null): THREE.ShaderMa
     uniforms: {
       uTexture: { value: texture },
       uTime: { value: 0 },
-      uCoronaIntensity: { value: 0.5 },
+      uCoronaIntensity: { value: 0.9 },
       uSunColor: { value: new THREE.Color(0xfff5e6) },
       uCoronaColor: { value: new THREE.Color(0xffaa00) },
     },
@@ -250,9 +253,12 @@ export const coronaFragmentShader = `
     float fresnel = 1.0 - abs(dot(normalize(cameraPosition - vWorldPosition), vNormal));
 
     // Radial streamers — animated angular noise that forms spikes/flares.
-    float angleNoise = snoise(vec3(dir * 2.5 + uTime * 0.15));
-    float radialNoise = snoise(vec3(dir * 5.0 - uTime * 0.3));
-    float streamers = 0.65 + 0.35 * angleNoise + 0.2 * radialNoise;
+    // Faster evolution plus a slow-evolving filament layer keeps the corona
+    // feeling dynamic instead of a static halo.
+    float angleNoise = snoise(vec3(dir * 2.5 + uTime * 0.22));
+    float radialNoise = snoise(vec3(dir * 5.0 - uTime * 0.45));
+    float filament = 0.5 + 0.5 * snoise(vec3(dir * 8.0 + uTime * 0.1));
+    float streamers = 0.6 + 0.45 * angleNoise + 0.3 * radialNoise + 0.25 * filament;
 
     // Broad halo falloff and a tighter bright ring hugging the photosphere.
     float halo = exp(-(radius - 1.0) * 1.4) * fresnel;
@@ -280,7 +286,7 @@ export function createCoronaShaderMaterial(): THREE.ShaderMaterial {
       uTime: { value: 0 },
       uColor: { value: new THREE.Color(0xff9d00) },
       uCoreColor: { value: new THREE.Color(0xfff3c8) },
-      uIntensity: { value: 1.0 },
+      uIntensity: { value: 1.35 },
     },
     transparent: true,
     side: THREE.BackSide,

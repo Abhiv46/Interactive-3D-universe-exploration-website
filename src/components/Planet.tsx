@@ -43,13 +43,61 @@ interface PlanetProps {
   labelEnabled?: boolean;
 }
 
+/**
+ * Soft pulsing halo behind each planet so bodies pop against the black
+ * background even at the default distant framing. A canvas-generated radial
+ * gradient keeps it dependency-free; additive blending + a slow opacity/scale
+ * oscillation reads as a gentle breathing glow rather than a hard disc.
+ */
+function PlanetGlow({ color, size }: { color: string; size: number }) {
+  const spriteRef = useRef<THREE.Sprite>(null);
+  const isPlaying = useSimulationPlaying();
+
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+    const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.35, 'rgba(255, 255, 255, 0.45)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 256, 256);
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
+
+  const material = useMemo(() => new THREE.SpriteMaterial({
+    map: texture,
+    color: new THREE.Color(color),
+    transparent: true,
+    opacity: 0.2,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  }), [texture, color]);
+
+  // Gentle pulse. Frozen while paused so the canvas keeps settling (the same
+  // pattern the planet mesh uses) — snapshot stability in the E2E suite.
+  useFrame(({ clock }) => {
+    if (!isPlaying || !spriteRef.current) return;
+    const t = clock.getElapsedTime();
+    const pulse = 0.5 + 0.5 * Math.sin(t * 0.8 + size * 0.001);
+    spriteRef.current.material.opacity = 0.14 + pulse * 0.16;
+    spriteRef.current.scale.setScalar(size * (2.3 + pulse * 0.35));
+  });
+
+  return <sprite ref={spriteRef} material={material} scale={[size * 2.3, size * 2.3, 1]} renderOrder={5} />;
+}
+
 export function Planet({
   data,
   visualScale = VISUAL_RADIUS_SCALE,
   trueScale = false,
   showOrbit = true,
   orbitColor,
-  orbitOpacity = 0.3,
+  orbitOpacity = 0.55,
   rotate = true,
   onClick,
   moons = [],
@@ -157,7 +205,7 @@ export function Planet({
 
   // Orbit line material
   const orbitMaterial = useMemo(() => new THREE.LineBasicMaterial({
-    color: new THREE.Color(orbitColor || data.visual.orbitColor || '#444466'),
+    color: new THREE.Color(orbitColor || data.visual.orbitColor || '#5a6c9e'),
     transparent: true,
     opacity: orbitOpacity,
     depthWrite: false,
@@ -437,6 +485,9 @@ export function Planet({
           renderOrder={3}
         />
       )}
+
+      {/* Soft pulsing halo — helps the planet read against the black background */}
+      <PlanetGlow color={data.visual.baseColor} size={displayRadius} />
 
       {/* Rings (if applicable) - Saturn, Uranus, Neptune */}
       {rings}

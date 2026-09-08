@@ -62,9 +62,9 @@ export const DEFAULT_SETTINGS: SettingsState = {
   enableFXAA: true,
   enableGodRays: false,
   enableVignette: true,
-  bloomIntensity: 0.6,
-  bloomThreshold: 0.65,
-  bloomSmoothing: 0.3,
+  bloomIntensity: 0.9,
+  bloomThreshold: 0.45,
+  bloomSmoothing: 0.4,
   toneMappingExposure: 1.0,
 
   // Performance

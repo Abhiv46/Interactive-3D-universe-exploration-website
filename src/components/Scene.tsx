@@ -40,10 +40,19 @@ function SceneContent() {
   const { trueScale } = useScale();
   const { registerCamera, registerControls, registerBodies } = useCameraControls();
   const registerAllBodies = useRegisterBodies();
+  // True while the user is actively interacting with the camera (OrbitControls
+  // start/end). While interacting we keep the render loop running continuously
+  // so zoom/scroll/pan/rotate are smooth even when the simulation is paused
+  // (where frameloop would otherwise drop to 'demand').
+  const [isInteracting, setIsInteracting] = useState(false);
   // RenderState camera registrar must reach the screenshot hook too. Aliased
   // because `registerCamera` above is the camera-CONTROLS registrar (line 90
   // feeds both; before this the RenderState camera was never set and every
   // screenshot failed the "camera not available" guard).
+  // flyTo is our only in-app route to an animated camera transition (SearchBar
+  // and the field code go through it). We expose it so the E2E suite can drive
+  // a REAL fly-to ('Mars', 'Earth', …) rather than a synthetic camera move.
+  const { flyTo } = useCameraControls();
   const { registerRenderer, registerScene, registerCamera: registerRenderStateCamera } = useRenderState();
   const { showConstellations, starMagnitudeLimit } = useStarFieldControls();
   const { settings } = useSettings();
@@ -80,20 +89,19 @@ function SceneContent() {
           ~770 units, so it is never cut off at this distance. */}
       <Canvas
         camera={{ position: [0, 120, 1500], fov: 50 }}
-        // Freeze rendering entirely when the simulation is paused: R3F stops
-        // re-rendering the (frozen) scene, so the canvas drawing buffer settles
-        // and Playwright's screenshot-stability checks stop seeing per-frame
-        // differences from a live render loop. OrbitControls still invalidate
-        // on interaction, so the user keeps full camera control while paused.
-        frameloop={isRunning ? 'always' : 'demand'}
+        // Freeze rendering entirely when the simulation is paused AND the user
+        // is not interacting with the camera: R3F stops re-rendering the frozen
+        // scene, so the canvas drawing buffer settles and Playwright's
+        // screenshot-stability checks stop seeing per-frame differences from a
+        // live render loop. While the user is actively zooming/panning/rotating
+        // (or the sim is running) we render continuously for smooth motion.
+        frameloop={isRunning || isInteracting ? 'always' : 'demand'}
         style={{ width: '100%', height: '100%', outline: 'none' }}
         onCreated={({ gl, camera, scene }) => {
           gl.setClearColor(0x000000, 1)
           gl.toneMapping = THREE.ACESFilmicToneMapping
           gl.toneMappingExposure = settings.toneMappingExposure
           gl.outputColorSpace = 'srgb' as const
-          // Enable logarithmic depth buffer on the renderer (type assertion for TS)
-          (gl as any).logarithmicDepthBuffer = true
           registerCamera(camera);
           registerRenderStateCamera(camera);
           registerRenderer(gl);
@@ -101,6 +109,14 @@ function SceneContent() {
           // Expose to window for testing/debugging
           if (typeof window !== 'undefined') {
             window.__THREE__ = { scene, camera, gl, THREE };
+            // Test seam: drive a real animated fly-to by body id (mirrors the
+            // SearchBar workflow). The E2E suite uses it to verify the paused
+            // demand-mode fly-to still renders frame by frame.
+            window.__THREE__.flyTo = (bodyId: string, duration?: number) => {
+              const body = ALL_BODIES.find(b => b.id === bodyId)
+                ?? BODIES_MAP.get(bodyId);
+              if (body) flyTo(body, duration);
+            };
           }
         }}
       >
@@ -115,6 +131,8 @@ function SceneContent() {
             registerControls={registerControls}
             trueScale={trueScale}
             settings={settings}
+            onInteractStart={() => setIsInteracting(true)}
+            onInteractEnd={() => setIsInteracting(false)}
           />
         </GalaxyCameraProvider>
       </Canvas>
@@ -134,6 +152,8 @@ function SceneInner({
   registerControls,
   trueScale,
   settings,
+  onInteractStart,
+  onInteractEnd,
 }: {
   starMagnitudeLimit: number;
   showConstellations: boolean;
@@ -143,6 +163,8 @@ function SceneInner({
   registerControls: any;
   trueScale: boolean;
   settings: any;
+  onInteractStart: () => void;
+  onInteractEnd: () => void;
 }) {
   const { camera, gl } = useThree();
   const { registerCamera, registerBodies, setFocus } = useCameraControls();
@@ -327,6 +349,8 @@ function SceneInner({
         dampingFactor={0.05}
         minDistance={5}
         maxDistance={100000}
+        onStart={onInteractStart}
+        onEnd={onInteractEnd}
         // Touch controls
         touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
       />
